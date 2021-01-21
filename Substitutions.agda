@@ -16,6 +16,50 @@ Sub Γ Γ' = {X : VType} → X ∈-∷ Γ → Γ' ⊢V⦂ X
 
 -- PARALLEL SUBSTITUTIONS
 
+data Sub : Ctx → Ctx → Set where
+  !     : {Γ' : Ctx} → Sub [] Γ'
+  ⟨_,_⟩ : {Γ Γ' : Ctx} {X : VType} → Sub Γ Γ' → Γ' ⊢V⦂ X → Sub (Γ ∷ X) Γ'
+  π     : {Γ Γ' : Ctx} {X : VType} → Sub Γ Γ' → Sub Γ (Γ' ∷ X)
+  φ     : {Γ Γ' : Ctx} → Sub Γ Γ' → Sub (Γ ■) (Γ' ■)
+  η : {Γ : Ctx} → Sub (Γ ■) Γ
+  μ : {Γ : Ctx} → Sub (Γ ■) (Γ ■ ■)
+
+
+-- RENAMINGS AS SUBSTITUTIONS
+
+sub-of-ren : {Γ Γ' : Ctx} → Ren Γ Γ' → Sub Γ Γ'
+sub-of-ren ! = !
+sub-of-ren ⟨ f , x ⟩ = ⟨ sub-of-ren f , ` x ⟩
+sub-of-ren (π f) = π (sub-of-ren f)
+sub-of-ren (φ f) = φ (sub-of-ren f)
+sub-of-ren η = η
+sub-of-ren μ = μ
+
+
+-- COMPOSITION OF SUBSTITUTIONS
+
+comp-sub : {Γ Γ' Γ'' : Ctx} → Sub Γ' Γ'' → Sub Γ Γ' → Sub Γ Γ''
+comp-sub t ! = {!!}
+comp-sub t ⟨ s , x ⟩ = {!!}
+comp-sub t (π s) = {!!}
+comp-sub t (φ s) = {!!}
+comp-sub t η = {!!}
+comp-sub t μ = {!!}
+
+
+-- IDENTITY AND EXTENSION SUBSTITUTIONS
+
+id-subst : {Γ : Ctx} → Sub Γ Γ
+id-subst {[]} = !
+id-subst {Γ ∷ X} = ⟨ {!!} , ` Hd ⟩
+id-subst {Γ ■} = φ id-subst
+
+
+
+
+
+
+{-
 data _∈-∷_ (X : VType) : Ctx → Set where
   Hd : {Γ : Ctx} → X ∈-∷ (Γ ∷ X)
   Tl : {Γ : Ctx} {Y : VType} → X ∈-∷ Γ → X ∈-∷ (Γ ∷ Y)
@@ -130,7 +174,7 @@ mutual
   (coerce p q M) [ s ]m =
     coerce p q (M [ s ]m)
 
-
+-}
 
 {-
 -- IDENTITY AND EXTENSION SUBSTITUTIONS

@@ -39,6 +39,11 @@ data Ctx : Set where
 ■-free (Γ ∷ X) = ■-free Γ
 ■-free (Γ ■) = ⊥
 
+_++_ : Ctx → Ctx → Ctx
+Γ ++ [] = Γ
+Γ ++ (Γ' ∷ X) = (Γ ++ Γ') ∷ X
+Γ ++ (Γ' ■) = (Γ ++ Γ') ■
+
 
 -- VARIABLES IN CONTEXTS (I.E., DE BRUIJN INDICES)
 
