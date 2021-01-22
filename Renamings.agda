@@ -16,7 +16,7 @@ data Ren : Ctx → Ctx → Set where
           --------------------------
           Ren (Γ ∷ X) Γ'
           
-  !     : {Γ' : Ctx} →
+  ε     : {Γ' : Ctx} →
           ------------
           Ren [] Γ'
   
@@ -52,7 +52,7 @@ ren-var (φ f) (Tl-■ x x₁) =
 
 id-ren : {Γ : Ctx} → Ren Γ Γ 
 id-ren {[]} =
-  !
+  ε
 id-ren {Γ ∷ X} =
   ⟨ π id-ren , Hd ⟩
 id-ren {Γ ■} =
@@ -64,8 +64,8 @@ id-ren {Γ ■} =
 comp-ren : {Γ Γ' Γ'' : Ctx} → Ren Γ' Γ'' → Ren Γ Γ' → Ren Γ Γ''
 comp-ren g ⟨ f , x ⟩ =
   ⟨ comp-ren g f , ren-var g x ⟩
-comp-ren g ! =
-  !
+comp-ren g ε =
+  ε
 comp-ren ⟨ g , x ⟩ (π f) =
   comp-ren g f
 comp-ren (π g) (π f) =
@@ -80,7 +80,7 @@ comp-ren (φ g) (φ f) =
 
 ren-wk₁ : {Γ : Ctx} {X : VType} → Ren Γ (Γ ∷ X)
 ren-wk₁ {[]} =
-  !
+  ε
 ren-wk₁ {Γ ∷ X} =
   π ⟨ ren-wk₁ , Hd ⟩
 ren-wk₁ {Γ ■} =
@@ -94,8 +94,8 @@ ren-wk₂ =
 -- CONGRUENCE OF RENAMINGS
 
 ren-cong : {Γ Γ' : Ctx} {X : VType} → Ren Γ Γ' → Ren (Γ ∷ X) (Γ' ∷ X)
-ren-cong ! =
-  ⟨ ! , Hd ⟩
+ren-cong ε =
+  ⟨ ε , Hd ⟩
 ren-cong ⟨ f , x ⟩ =
   ⟨ π ⟨ f , x ⟩ , Hd ⟩
 ren-cong (π f) =
@@ -113,7 +113,7 @@ mutual
   V-rename f (´ c) = ´ c
   V-rename f (ƛ M) = ƛ (C-rename (ren-cong f) M)
   V-rename f ⟨ V ⟩ = ⟨ V-rename f V ⟩
-  V-rename f [ V ] = [ V-rename (φ f) V ]
+  V-rename f (□ V) = □ (V-rename (φ f) V)
 
   C-rename : {C : CType} {Γ Γ' : Ctx} → Ren Γ Γ' → Γ ⊢C⦂ C → Γ' ⊢C⦂ C
   C-rename f (return V) =

@@ -25,7 +25,7 @@ mutual
     ``  : BType → VType
     _⇒_ : VType → CType → VType
     ⟨_⟩ : VType → VType
-    [_] : VType → VType
+    □   : VType → VType
 
   data CType : Set where
     _!_ : VType → O × I → CType
@@ -40,7 +40,7 @@ mobile : VType → Set
 mobile (`` A) = ⊤
 mobile (X ⇒ C) = ⊥
 mobile ⟨ X ⟩ = ⊥
-mobile [ X ] = ⊤
+mobile (□ X) = ⊤
 
 
 -- PROCESS TYPES

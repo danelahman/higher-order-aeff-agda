@@ -28,15 +28,15 @@ data Ctx : Set where
   _∷_ : Ctx → VType → Ctx
   _■  : Ctx → Ctx
 
-infixl 30 _∷_
-infixl 30 _■
+infixl 35 _∷_
+infixl 35 _■
 
-_++_ : Ctx → Ctx → Ctx
-Γ ++ [] = Γ
-Γ ++ (Γ' ∷ X) = (Γ ++ Γ') ∷ X
-Γ ++ (Γ' ■) = (Γ ++ Γ') ■
+_++ₖ_ : Ctx → Ctx → Ctx
+Γ ++ₖ [] = Γ
+Γ ++ₖ (Γ' ∷ X) = (Γ ++ₖ Γ') ∷ X
+Γ ++ₖ (Γ' ■) = (Γ ++ₖ Γ') ■
 
-infixl 30 _++_
+infixl 30 _++ₖ_
 
 -- VARIABLES IN CONTEXTS (I.E., DE BRUIJN INDICES)
 
@@ -72,10 +72,10 @@ mutual
           -------------
           Γ ⊢V⦂ ⟨ X ⟩
 
-    [_] : {X : VType} →
+    □   : {X : VType} →
           Γ ■ ⊢V⦂ X →
           -------------
-          Γ ⊢V⦂ [ X ]
+          Γ ⊢V⦂ □ X
 
           
   infix 40 _·_
@@ -116,18 +116,18 @@ mutual
                        {i : I} →
                        (op : Σₛ) →
                        op ∈ₒ o →
-                       Γ ⊢V⦂ (proj₁ (payload op)) →
+                       Γ ⊢V⦂ proj₁ (payload op) →
                        Γ ⊢C⦂ X ! (o , i) →
-                       ----------------------------
+                       --------------------------
                        Γ ⊢C⦂ X ! (o , i)
 
     ↓                : {X : VType}
                        {o : O}
                        {i : I}
                        (op : Σₛ) →
-                       Γ ⊢V⦂ (proj₁ (payload op)) →
+                       Γ ⊢V⦂ proj₁ (payload op) →
                        Γ ⊢C⦂ X ! (o , i) →
-                       ----------------------------
+                       --------------------------
                        Γ ⊢C⦂ X ! op ↓ₑ (o , i)
 
     promise_∣_↦_`in_ : {X Y : VType}
@@ -135,9 +135,9 @@ mutual
                        {i i' : I} → 
                        (op : Σₛ) →
                        lkpᵢ op i ≡ just (o' , i') →
-                       Γ ∷ (proj₁ (payload op)) ⊢C⦂ ⟨ X ⟩ ! (o' , i') →
+                       Γ ∷ proj₁ (payload op) ⊢C⦂ ⟨ X ⟩ ! (o' , i') →
                        Γ ∷ ⟨ X ⟩ ⊢C⦂ Y ! (o , i) →
-                       ------------------------------------------------
+                       ----------------------------------------------
                        Γ ⊢C⦂ Y ! (o , i)
 
     await_until_     : {X : VType}
@@ -149,7 +149,7 @@ mutual
 
     unbox_`in_       : {X : VType}
                        {C : CType} →
-                       Γ ⊢V⦂ [ X ] →
+                       Γ ⊢V⦂ □ X →
                        Γ ∷ X ⊢C⦂ C →
                        -------------
                        Γ ⊢C⦂ C
@@ -206,9 +206,9 @@ data _⊢P⦂_ (Γ : Ctx) : {o : O} → PType o → Set where
 -- ADMISSIBLE TYPING RULES
 
 ■-dup-var : {Γ Γ' : Ctx} {X : VType} →
-            X ∈ (Γ ■ ++ Γ') →
+            X ∈ (Γ ■ ++ₖ Γ') →
             --------------------------
-            X ∈ (Γ ■ ■ ++ Γ')
+            X ∈ (Γ ■ ■ ++ₖ Γ')
 
 ■-dup-var {Γ} {[]} (Tl-■ p x) =
   Tl-■ p (Tl-■ p x)
@@ -223,9 +223,9 @@ data _⊢P⦂_ (Γ : Ctx) : {o : O} → PType o → Set where
 mutual
 
   ■-dup-v : {Γ Γ' : Ctx} {X : VType} →
-            (Γ ■ ++ Γ') ⊢V⦂ X →
+            (Γ ■ ++ₖ Γ') ⊢V⦂ X →
             --------------------------
-            (Γ ■ ■ ++ Γ') ⊢V⦂ X
+            (Γ ■ ■ ++ₖ Γ') ⊢V⦂ X
           
   ■-dup-v (` x) =
     ` ■-dup-var x
@@ -235,14 +235,14 @@ mutual
     ƛ (■-dup-c M)
   ■-dup-v ⟨ V ⟩ =
     ⟨ ■-dup-v V ⟩
-  ■-dup-v [ V ] =
-    [ ■-dup-v {Γ' = _ ■} V ]
+  ■-dup-v (□ V) =
+    □ (■-dup-v {Γ' = _ ■} V)
 
 
   ■-dup-c : {Γ Γ' : Ctx} {C : CType} →
-            (Γ ■ ++ Γ') ⊢C⦂ C →
+            (Γ ■ ++ₖ Γ') ⊢C⦂ C →
             --------------------------
-            (Γ ■ ■ ++ Γ') ⊢C⦂ C
+            (Γ ■ ■ ++ₖ Γ') ⊢C⦂ C
 
   ■-dup-c (return V) =
     return (■-dup-v V)
@@ -276,5 +276,5 @@ mutual
   ` Tl-■ p x
 ■-wk p (´ c) =
   ´ c
-■-wk p [ V ] =
-  [ ■-dup-v {_} {[]} V ]
+■-wk p (□ V) =
+  □ (■-dup-v {_} {[]} V)

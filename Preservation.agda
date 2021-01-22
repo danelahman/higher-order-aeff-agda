@@ -32,7 +32,7 @@ data _⊢E[_]⦂_ (Γ : Ctx) : (Δ : BCtx) → CType → Set where
                      {o : O}
                      {i : I} →
                      Γ ⊢E[ Δ ]⦂ X ! (o , i) →
-                     Γ ∷ X ⊢M⦂ Y ! (o , i) →
+                     Γ ∷ X ⊢C⦂ Y ! (o , i) →
                      ------------------------
                      Γ ⊢E[ Δ ]⦂ Y ! (o , i)
 
@@ -42,9 +42,9 @@ data _⊢E[_]⦂_ (Γ : Ctx) : (Δ : BCtx) → CType → Set where
                      {i : I} →
                      (op : Σₛ) →
                      op ∈ₒ o →
-                     Γ ⊢V⦂ ``(payload op) →
+                     Γ ⊢V⦂ proj₁ (payload op) →
                      Γ ⊢E[ Δ ]⦂ X ! (o , i) →
-                     ------------------------
+                     --------------------------
                      Γ ⊢E[ Δ ]⦂ X ! (o , i)
 
   ↓                : {Δ : BCtx}
@@ -52,7 +52,7 @@ data _⊢E[_]⦂_ (Γ : Ctx) : (Δ : BCtx) → CType → Set where
                      {o : O}
                      {i : I}
                      (op : Σₛ) →
-                     Γ ⊢V⦂ ``(payload op) →
+                     Γ ⊢V⦂ proj₁ (payload op) →
                      Γ ⊢E[ Δ ]⦂ X ! (o , i) →
                      ---------------------------
                      Γ ⊢E[ Δ ]⦂ X ! op ↓ₑ (o , i)
@@ -63,9 +63,9 @@ data _⊢E[_]⦂_ (Γ : Ctx) : (Δ : BCtx) → CType → Set where
                      {i i' : I} → 
                      (op : Σₛ) →
                      lkpᵢ op i ≡ just (o' , i') →
-                     Γ ∷ ``(payload op) ⊢M⦂ ⟨ X ⟩ ! (o' , i') →
+                     Γ ∷ proj₁ (payload op) ⊢C⦂ ⟨ X ⟩ ! (o' , i') →
                      Γ ∷ ⟨ X ⟩ ⊢E[ Δ ]⦂ Y ! (o , i) →
-                     ------------------------------------------
+                     ----------------------------------------------
                      Γ ⊢E[ X ∷ₗ Δ ]⦂ Y ! (o , i)
 
   coerce           : {Δ : BCtx}
@@ -111,7 +111,7 @@ hole-ty-e (coerce p q E) =
 
 infix 30 _[_]
 
-_[_] : {Γ : Ctx} {Δ : BCtx} {C : CType} → (E : Γ ⊢E[ Δ ]⦂ C) → Γ ⋈ Δ ⊢M⦂ (hole-ty-e E) → Γ ⊢M⦂ C
+_[_] : {Γ : Ctx} {Δ : BCtx} {C : CType} → (E : Γ ⊢E[ Δ ]⦂ C) → Γ ⋈ Δ ⊢C⦂ (hole-ty-e E) → Γ ⊢C⦂ C
 [-] [ M ] =
   M
 (let= E `in N) [ M ] =
@@ -126,6 +126,70 @@ coerce p q E [ M ] =
   coerce p q (E [ M ])
 
 
+-- STRENGTHENING OF GROUND VALUES WRT BOUND PROMISES
+
+strengthen-var : {Γ : Ctx} → (Δ : BCtx) → {X : VType} →
+                 mobile X →
+                 X ∈ Γ ⋈ Δ →
+                 --------------------------------------
+                 X ∈ Γ
+                 
+strengthen-var [] p x = x
+strengthen-var (y ∷ₗ Δ) p x with strengthen-var Δ p x
+... | Tl-v z = z
+
+
+strengthen-■-var : {Γ : Ctx} → (Γ' : Ctx) →
+                   (Δ : BCtx) → {X : VType} →
+                   X ∈ (Γ ⋈ Δ) ■ ++ₖ Γ' →
+                   --------------------------
+                   X ∈ Γ ■ ++ₖ Γ'
+
+strengthen-■-var Γ' [] x = x
+strengthen-■-var [] (y ∷ₗ Δ) x = {!!}
+strengthen-■-var (Γ' ∷ Z) (y ∷ₗ Δ) x = {!!}
+strengthen-■-var (Γ' ■) (y ∷ₗ Δ) x = {!!}
+
+{-
+strengthen-■-var [] [] x =
+  x
+strengthen-■-var [] (y ∷ₗ Δ) x with strengthen-■-var [] Δ x
+... | Tl-■ p z =
+  Tl-■ p (strengthen-var (y ∷ₗ []) p z)
+strengthen-■-var (Γ' ∷ Y) [] x =
+  x
+strengthen-■-var (Γ' ∷ Y) (y ∷ₗ Δ) x = {!!}
+strengthen-■-var (Γ' ■) Δ x = {!!}
+-}
+
+mutual 
+  strengthen-■-v : {Γ Γ' : Ctx} {Δ : BCtx} {X : VType} →
+                   (Γ ⋈ Δ) ■ ++ₖ Γ' ⊢V⦂ X →
+                   ----------------------------------
+                   Γ ■ ++ₖ Γ' ⊢V⦂ X
+                 
+  strengthen-■-v {_} {_} {Δ} (` x) =
+    ` {!!} --strengthen-■-var Δ x
+  strengthen-■-v (´ c) =
+    ´ c
+  strengthen-■-v (ƛ M) = ƛ {!!}
+  strengthen-■-v ⟨ V ⟩ = {!!}
+  strengthen-■-v (□ V) = {!!}
+
+
+strengthen-val : {Γ : Ctx} {Δ : BCtx} {X : VType} →
+                 mobile X →
+                 Γ ⋈ Δ ⊢V⦂ X →
+                 ----------------------------------
+                 Γ ⊢V⦂ X
+                 
+strengthen-val {_} {Δ} p (` x) =
+  ` strengthen-var Δ p x
+strengthen-val p (´ c) = ´ c
+strengthen-val p (□ V) = {!!}
+
+
+{-
 -- STRENGTHENING OF GROUND VALUES WRT BOUND PROMISES
 
 strengthen-var : {Γ : Ctx} → (Δ : BCtx) → {A : BType} → `` A ∈ Γ ⋈ Δ → `` A ∈ Γ
@@ -354,3 +418,5 @@ data _↝_ {Γ : Ctx} : {C : CType} → Γ ⊢M⦂ C → Γ ⊢M⦂ C → Set wh
                                      (lkpᵢ-next-eq q r)
                                      (coerce (lkpᵢ-next-⊑ₒ q r) (lkpᵢ-next-⊑ᵢ q r) M)
                                      (coerce p q N)
+
+-}

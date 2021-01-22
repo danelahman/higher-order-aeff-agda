@@ -24,7 +24,7 @@ data Sub : Ctx → Ctx → Set where
           --------------------------
           Sub (Γ ∷ X) Γ'
 
-  !     : {Γ' : Ctx} →
+  ε     : {Γ' : Ctx} →
           ------------
           Sub [] Γ'
           
@@ -42,8 +42,8 @@ data Sub : Ctx → Ctx → Set where
 -- RENAMINGS AS SUBSTITUTIONS
 
 sub-of-ren : {Γ Γ' : Ctx} → Ren Γ Γ' → Sub Γ Γ'
-sub-of-ren ! =
-  !
+sub-of-ren ε =
+  ε
 sub-of-ren ⟨ f , x ⟩ =
   ⟨ sub-of-ren f , ` x ⟩
 sub-of-ren (π f) =
@@ -56,7 +56,7 @@ sub-of-ren (φ f) =
 
 id-sub : {Γ : Ctx} → Sub Γ Γ
 id-sub {[]} =
-  !
+  ε
 id-sub {Γ ∷ X} =
   ⟨ π id-sub , ` Hd ⟩
 id-sub {Γ ■} =
@@ -68,8 +68,8 @@ id-sub {Γ ■} =
 _[_]s : {Γ Γ' : Ctx} {X : VType} → Sub Γ Γ' → Γ' ⊢V⦂ X → Sub (Γ ∷ X) Γ'
 ⟨ s , x ⟩ [ V ]s =
   ⟨ s [ x ]s , V ⟩
-! [ V ]s =
-  ⟨ ! , V ⟩
+ε [ V ]s =
+  ⟨ ε , V ⟩
 (π s) [ V ]s =
   ⟨ π s , V ⟩
 (φ s) [ V ]s =
@@ -81,8 +81,8 @@ _[_]s : {Γ Γ' : Ctx} {X : VType} → Sub Γ Γ' → Γ' ⊢V⦂ X → Sub (Γ 
 lift : {Γ Γ' : Ctx} {X : VType} → Sub Γ Γ' → Sub (Γ ∷ X) (Γ' ∷ X)
 lift ⟨ s , x ⟩ =
   ⟨ π ⟨ s , x ⟩ , ` Hd ⟩
-lift ! =
-  ⟨ ! , ` Hd ⟩
+lift ε =
+  ⟨ ε , ` Hd ⟩
 lift (π s) =
   ⟨ π (π s) , ` Hd ⟩
 lift (φ s) =
@@ -123,8 +123,8 @@ mutual
   comp-sub : {Γ Γ' Γ'' : Ctx} → Sub Γ' Γ'' → Sub Γ Γ' → Sub Γ Γ''
   comp-sub t ⟨ s , V ⟩ =
     ⟨ comp-sub t s , V [ t ]v ⟩
-  comp-sub t ! =
-    !
+  comp-sub t ε =
+    ε
   comp-sub ⟨ t , x ⟩ (π s) =
     comp-sub t s
   comp-sub (π t) (π s) =
@@ -143,8 +143,8 @@ mutual
     ƛ (M [ lift s ]c)
   ⟨ V ⟩ [ s ]v =
     ⟨ V [ s ]v ⟩
-  [ V ] [ s ]v =
-    [ V [ φ s ]v ]
+  (□ V) [ s ]v =
+    □ (V [ φ s ]v)
 
   _[_]c : {Γ Γ' : Ctx} {C : CType} → Γ ⊢C⦂ C → Sub Γ Γ'  → Γ' ⊢C⦂ C
   (return V) [ s ]c =
