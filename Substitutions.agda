@@ -17,46 +17,155 @@ Sub Γ Γ' = {X : VType} → X ∈-∷ Γ → Γ' ⊢V⦂ X
 -- PARALLEL SUBSTITUTIONS
 
 data Sub : Ctx → Ctx → Set where
-  !     : {Γ' : Ctx} → Sub [] Γ'
-  ⟨_,_⟩ : {Γ Γ' : Ctx} {X : VType} → Sub Γ Γ' → Γ' ⊢V⦂ X → Sub (Γ ∷ X) Γ'
-  π     : {Γ Γ' : Ctx} {X : VType} → Sub Γ Γ' → Sub Γ (Γ' ∷ X)
-  φ     : {Γ Γ' : Ctx} → Sub Γ Γ' → Sub (Γ ■) (Γ' ■)
-  η : {Γ : Ctx} → Sub (Γ ■) Γ
-  μ : {Γ : Ctx} → Sub (Γ ■) (Γ ■ ■)
+
+  ⟨_,_⟩ : {Γ Γ' : Ctx} {X : VType} →
+          Sub Γ Γ' →
+          Γ' ⊢V⦂ X →
+          --------------------------
+          Sub (Γ ∷ X) Γ'
+
+  !     : {Γ' : Ctx} →
+          ------------
+          Sub [] Γ'
+          
+  π     : {Γ Γ' : Ctx} {X : VType} →
+          Sub Γ Γ' →
+          --------------------------
+          Sub Γ (Γ' ∷ X)
+  
+  φ     : {Γ Γ' : Ctx} →
+          Sub Γ Γ' →
+          ----------------
+          Sub (Γ ■) (Γ' ■)
+  
+  η     : {Γ : Ctx} →
+          -----------
+          Sub (Γ ■) Γ
+  
+  μ     : {Γ : Ctx} →
+          -----------------
+          Sub (Γ ■) (Γ ■ ■)
+
+  _∘_   : {Γ Γ' Γ'' : Ctx} →
+          Sub Γ' Γ'' →
+          Sub Γ Γ' →
+          ------------------
+          Sub Γ Γ'' 
 
 
 -- RENAMINGS AS SUBSTITUTIONS
 
 sub-of-ren : {Γ Γ' : Ctx} → Ren Γ Γ' → Sub Γ Γ'
-sub-of-ren ! = !
-sub-of-ren ⟨ f , x ⟩ = ⟨ sub-of-ren f , ` x ⟩
-sub-of-ren (π f) = π (sub-of-ren f)
-sub-of-ren (φ f) = φ (sub-of-ren f)
-sub-of-ren η = η
-sub-of-ren μ = μ
-
-
--- COMPOSITION OF SUBSTITUTIONS
-
-comp-sub : {Γ Γ' Γ'' : Ctx} → Sub Γ' Γ'' → Sub Γ Γ' → Sub Γ Γ''
-comp-sub t ! = {!!}
-comp-sub t ⟨ s , x ⟩ = {!!}
-comp-sub t (π s) = {!!}
-comp-sub t (φ s) = {!!}
-comp-sub t η = {!!}
-comp-sub t μ = {!!}
+sub-of-ren ! =
+  !
+sub-of-ren ⟨ f , x ⟩ =
+  ⟨ sub-of-ren f , ` x ⟩
+sub-of-ren (π f) =
+  π (sub-of-ren f)
+sub-of-ren (φ f) =
+  φ (sub-of-ren f)
+sub-of-ren η =
+  η
+sub-of-ren μ =
+  μ
+sub-of-ren (g ∘ f) =
+  sub-of-ren g ∘ sub-of-ren f
 
 
 -- IDENTITY AND EXTENSION SUBSTITUTIONS
 
 id-subst : {Γ : Ctx} → Sub Γ Γ
-id-subst {[]} = !
-id-subst {Γ ∷ X} = ⟨ {!!} , ` Hd ⟩
-id-subst {Γ ■} = φ id-subst
+id-subst {[]} =
+  !
+id-subst {Γ ∷ X} =
+  ⟨ π id-subst , ` Hd ⟩
+id-subst {Γ ■} =
+  φ id-subst
 
 
+_[_]s : {Γ Γ' : Ctx} {X : VType} → Sub Γ Γ' → Γ' ⊢V⦂ X → Sub (Γ ∷ X) Γ'
+⟨ s , x ⟩ [ V ]s =
+  ⟨ s [ x ]s , V ⟩
+! [ V ]s =
+  ⟨ ! , V ⟩
+(π s) [ V ]s =
+  ⟨ π s , V ⟩
+(φ s) [ V ]s =
+  ⟨ φ s , V ⟩
+η [ V ]s =
+  ⟨ η , V ⟩
+μ [ V ]s =
+  ⟨ μ , V ⟩
+(t ∘ s) [ V ]s =
+  ⟨ t ∘ s , V ⟩
 
 
+-- LIFTING SUBSTITUTIONS
+
+lift : {Γ Γ' : Ctx} {X : VType} → Sub Γ Γ' → Sub (Γ ∷ X) (Γ' ∷ X)
+lift ⟨ s , x ⟩ =
+  ⟨ π ⟨ s , x ⟩ , ` Hd ⟩
+lift ! =
+  ⟨ ! , ` Hd ⟩
+lift (π s) =
+  ⟨ π (π s) , ` Hd ⟩
+lift (φ s) =
+  ⟨ π (φ s) , ` Hd ⟩
+lift η =
+  ⟨ π η , ` Hd ⟩
+lift μ =
+  ⟨ π μ , ` Hd ⟩
+lift (t ∘ s) =
+  lift t ∘ lift s
+
+
+-- ACTION OF SUBSTITUTION ON WELL-TYPED VALUES AND COMPUTATIONS
+
+mutual
+
+  infix 40 _[_]v
+  infix 40 _[_]m
+
+  sub-var : {Γ Γ' : Ctx} {X : VType} → X ∈ Γ → Sub Γ Γ' → Γ' ⊢V⦂ X
+  sub-var Hd ⟨ s , V ⟩ = V
+  sub-var Hd (π s) = {!!}
+  sub-var Hd (t ∘ s) = {!!}
+  sub-var (Tl-v x) s = {!!}
+  sub-var (Tl-■ p x) s = {!!}
+
+  _[_]v : {Γ Γ' : Ctx} {X : VType} → Γ ⊢V⦂ X → Sub Γ Γ' → Γ' ⊢V⦂ X
+  (` x) [ s ]v =
+    sub-var x s
+  (`` c) [ s ]v =
+    `` c
+  (ƛ M) [ s ]v =
+    ƛ (M [ lift s ]m)
+  ⟨ V ⟩ [ s ]v =
+    ⟨ V [ s ]v ⟩
+  [ V ] [ s ]v =
+    [ V [ φ s ]v ]
+
+  _[_]m : {Γ Γ' : Ctx} {C : CType} → Γ ⊢M⦂ C → Sub Γ Γ'  → Γ' ⊢M⦂ C
+  (return V) [ s ]m =
+    return (V [ s ]v)
+  (let= M `in N) [ s ]m =
+    let= (M [ s ]m) `in (N [ lift s ]m)
+  (letrec M `in N) [ s ]m =
+    letrec M [ lift (lift s) ]m `in (N [ lift s ]m)
+  (V · W) [ s ]m =
+    (V [ s ]v) · (W [ s ]v)
+  (↑ op p V M) [ s ]m =
+    ↑ op p (V [ s ]v) (M [ s ]m)
+  (↓ op V M) [ s ]m =
+    ↓ op (V [ s ]v) (M [ s ]m)
+  (promise op ∣ p ↦ M `in N) [ s ]m =
+    promise op ∣ p ↦ (M [ lift s ]m) `in (N [ lift s ]m)
+  (await V until M) [ s ]m =
+    await (V [ s ]v) until (M [ lift s ]m)
+  (unbox V `in M) [ s ]m =
+    unbox (V [ s ]v) `in (M [ lift s ]m)
+  (coerce p q M) [ s ]m =
+    coerce p q (M [ s ]m)
 
 
 {-
