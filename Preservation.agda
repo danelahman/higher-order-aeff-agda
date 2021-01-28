@@ -146,35 +146,57 @@ strengthen-■-var : {Γ : Ctx} → (Γ' : Ctx) →
                    X ∈ Γ ■ ++ₖ Γ'
 
 strengthen-■-var Γ' [] x = x
-strengthen-■-var [] (y ∷ₗ Δ) x = {!!}
-strengthen-■-var (Γ' ∷ Z) (y ∷ₗ Δ) x = {!!}
-strengthen-■-var (Γ' ■) (y ∷ₗ Δ) x = {!!}
-
-{-
-strengthen-■-var [] [] x =
-  x
 strengthen-■-var [] (y ∷ₗ Δ) x with strengthen-■-var [] Δ x
-... | Tl-■ p z =
-  Tl-■ p (strengthen-var (y ∷ₗ []) p z)
-strengthen-■-var (Γ' ∷ Y) [] x =
-  x
-strengthen-■-var (Γ' ∷ Y) (y ∷ₗ Δ) x = {!!}
-strengthen-■-var (Γ' ■) Δ x = {!!}
--}
+... | Tl-■ p (Tl-v z) = Tl-■ p z
+strengthen-■-var (Γ' ∷ Z) (y ∷ₗ Δ) Hd = Hd
+strengthen-■-var (Γ' ∷ Z) (y ∷ₗ Δ) (Tl-v x) with strengthen-■-var Γ' (y ∷ₗ Δ) x
+... | q = Tl-v q
+strengthen-■-var (Γ' ■) (y ∷ₗ Δ) (Tl-■ p x) with strengthen-■-var Γ' (y ∷ₗ Δ) x
+... | q = Tl-■ p q
+
 
 mutual 
   strengthen-■-v : {Γ Γ' : Ctx} {Δ : BCtx} {X : VType} →
                    (Γ ⋈ Δ) ■ ++ₖ Γ' ⊢V⦂ X →
-                   ----------------------------------
+                   -------------------------------------
                    Γ ■ ++ₖ Γ' ⊢V⦂ X
                  
-  strengthen-■-v {_} {_} {Δ} (` x) =
-    ` {!!} --strengthen-■-var Δ x
+  strengthen-■-v {_} {Γ'} {Δ} (` x) =
+    ` strengthen-■-var Γ' Δ x
   strengthen-■-v (´ c) =
     ´ c
   strengthen-■-v (ƛ M) = ƛ {!!}
-  strengthen-■-v ⟨ V ⟩ = {!!}
-  strengthen-■-v (□ V) = {!!}
+  strengthen-■-v {Γ} {Γ'} {Δ} ⟨ V ⟩ =
+    ⟨ strengthen-■-v {Γ} {Γ'} {Δ} V ⟩
+  strengthen-■-v {Γ} {Γ'} {Δ} (□ V) =
+    □ (strengthen-■-v {Γ} {Γ' ■} {Δ} V)
+
+
+  strengthen-■-c : {Γ Γ' : Ctx} {Δ : BCtx} {C : CType} →
+                   (Γ ⋈ Δ) ■ ++ₖ Γ' ⊢C⦂ C →
+                   -------------------------------------
+                   Γ ■ ++ₖ Γ' ⊢C⦂ C
+
+  strengthen-■-c {Γ} {Γ'} {Δ} (return V) =
+    return (strengthen-■-v {Γ} {Γ'} {Δ} V)
+  strengthen-■-c {Γ} {Γ'} {Δ} (let= M `in N) =
+    let= (strengthen-■-c {Γ} {Γ'} {Δ} M) `in (strengthen-■-c {Γ} {Γ' ∷ _} {Δ} N)
+  strengthen-■-c {Γ} {Γ'} {Δ} (letrec M `in N) =
+    letrec (strengthen-■-c {Γ} {Γ' ∷ (_ ⇒ _) ∷ _} {Δ} M) `in (strengthen-■-c {Γ} {Γ' ∷ (_ ⇒ _)} {Δ} N)
+  strengthen-■-c {Γ} {Γ'} {Δ} (V · W) =
+    (strengthen-■-v {Γ} {Γ'} {Δ} V) · (strengthen-■-v {Γ} {Γ'} {Δ} W)
+  strengthen-■-c {Γ} {Γ'} {Δ} (↑ op p V M) =
+    ↑ op p (strengthen-■-v {Γ} {Γ'} {Δ} V) (strengthen-■-c {Γ} {Γ'} {Δ} M)
+  strengthen-■-c {Γ} {Γ'} {Δ} (↓ op V M) =
+    ↓ op (strengthen-■-v {Γ} {Γ'} {Δ} V) (strengthen-■-c {Γ} {Γ'} {Δ} M)
+  strengthen-■-c {Γ} {Γ'} {Δ} (promise op ∣ p ↦ M `in N) =
+    promise op ∣ p ↦ (strengthen-■-c {Γ} {Γ' ∷ proj₁ (payload op)} {Δ} M) `in (strengthen-■-c {Γ} {Γ' ∷ ⟨ _ ⟩} {Δ} N)
+  strengthen-■-c {Γ} {Γ'} {Δ} (await V until N) =
+    await (strengthen-■-v {Γ} {Γ'} {Δ} V) until (strengthen-■-c {Γ} {Γ' ∷ _} {Δ} N)
+  strengthen-■-c {Γ} {Γ'} {Δ} (unbox V `in N) =
+    unbox (strengthen-■-v {Γ} {Γ'} {Δ} V) `in (strengthen-■-c {Γ} {Γ' ∷ _} {Δ} N)
+  strengthen-■-c {Γ} {Γ'} {Δ} (coerce p q M) =
+    coerce p q (strengthen-■-c {Γ} {Γ'} {Δ} M)
 
 
 strengthen-val : {Γ : Ctx} {Δ : BCtx} {X : VType} →
@@ -185,8 +207,10 @@ strengthen-val : {Γ : Ctx} {Δ : BCtx} {X : VType} →
                  
 strengthen-val {_} {Δ} p (` x) =
   ` strengthen-var Δ p x
-strengthen-val p (´ c) = ´ c
-strengthen-val p (□ V) = {!!}
+strengthen-val p (´ c) =
+  ´ c
+strengthen-val {Γ} {Δ} p (□ V) =
+  □ (strengthen-■-v {Γ} {[]} {Δ} V)
 
 
 {-
