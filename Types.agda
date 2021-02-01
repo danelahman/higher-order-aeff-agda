@@ -84,8 +84,6 @@ op ↓ₚ PP = proj₂ (op ↓ₚₚ PP)
 
 -- ACTION OF INTERRUPTS ON PROCESS TYPES PRESERVES SIGNAL ANNOTATIONS
 
-{- LEMMA 4.1 -}
-
 ↓ₚₚ-⊑ₒ : {op : Σₛ}
         {o : O} →
         (PP : PType o) →
