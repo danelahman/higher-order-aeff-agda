@@ -564,8 +564,6 @@ inj-pair₂ refl = refl
 
 -- INCLUSION INTO ACTED UPON EFFECT ANNOTATION
 
-{- LEMMA 3.1 (1) -}
-
 ↓ₑ-⊑ₒ : {o : O}
         {i : I}
         {op : Σₛ} →
@@ -576,8 +574,6 @@ inj-pair₂ refl = refl
 ... | nothing = p
 ... | just (o' , i') = ∪ₒ-inl op' p
 
-
-{- LEMMA 3.1 (2) - the O part -}
 
 ↓ₑ-⊑ₒ-o' : {o o' : O}
            {i i' : I}
@@ -596,8 +592,6 @@ inj-pair₂ refl = refl
     ↓ₑ-⊑ₒ-o'-aux op' p | nothing = p
     ↓ₑ-⊑ₒ-o'-aux op' p | just tt = refl
 
-
-{- LEMMA 3.1 (2) - the I part -}
 
 ↓ₑ-⊑ₒ-i' : {o o' : O}
            {i i' : I}
@@ -627,8 +621,6 @@ inj-pair₂ refl = refl
 
 
 -- EFFECT ANNOTATION OF AN INTERRUPT THAT WAS NOT ACTED WITH
-
-{- LEMMA 3.1 (3) -}
 
 lkpᵢ-↓ₑ-neq : {o o' : O}
               {i i' : I} {op op' : Σₛ} →
@@ -1234,8 +1226,6 @@ mutual
 
 
 -- ENVELOPING THE EFFECT ANNOTATION REDUCTION WITH MLTIPLE INTERRUPT ACTIONS
-
-{- LEMMA 4.5 -}
 
 ↓↓ₑ-⊑ₒ-act : {o : O}
              {i : I} → 

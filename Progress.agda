@@ -93,8 +93,6 @@ data CompResult⟨_∣_⟩ (Γ : MCtx) : {C : CType} → ⟨⟨ Γ ⟩⟩ ⊢C�
 ⇒-not-in-mctx {Γ ∺ Y} (Tl-v x) =
   ⇒-not-in-mctx x
 
-{- THEOREM 3.3 -}  
-
 progress : {Γ : MCtx}
            {C : CType} →
            (M : ⟨⟨ Γ ⟩⟩ ⊢C⦂ C) →
@@ -170,8 +168,6 @@ progress (coerce p q M) with progress M
 
 
 -- PROGRESS THEOREM FOR CLOSED COMPUTATIONS
-
-{- COROLLARY 3.4 -}
 
 closed-progress : {C : CType} →
                   (M : [] ⊢C⦂ C) →

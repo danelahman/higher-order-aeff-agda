@@ -216,8 +216,6 @@ strengthen-val {Γ} {Δ} p (□ V) =
 -- SMALL-STEP OPERATIONAL SEMANTICS FOR WELL-TYPED COMPUTATIONS
 -- (ADDITIONALLY SERVES AS THE PRESERVATION THEOREM)
 
-{- THEOREM 3.6 -}
-
 infix 10 _↝_
 
 data _↝_ {Γ : Ctx} : {C : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ C → Set where

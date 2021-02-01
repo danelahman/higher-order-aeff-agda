@@ -65,8 +65,6 @@ data ProcResult⟨_⟩ : {o : O} {PP : PType o} → [] ⊢P⦂ PP → Set where
 
 -- PROGRESS THEOREM FOR PROCESSES
 
-{- THEOREM 4.3 -}
-
 proc-progress : {o : O}
                 {PP : PType o} →
                 (P : [] ⊢P⦂ PP) →

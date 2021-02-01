@@ -11,7 +11,7 @@ open import EffectAnnotations
 open import Preservation
 open import Progress
 open import Renamings
-open import Substitutions
+open import Substitutions renaming (⟨_,_⟩ to ⟨_,,_⟩)
 open import Types
 
 open import Relation.Binary.PropositionalEquality hiding ([_])
@@ -28,38 +28,38 @@ mutual
 
   infix 10 _↝↝_
 
-  data _↝↝_ {Γ : Ctx} : {C : CType} → Γ ⊢M⦂ C → Γ ⊢M⦂ C → Set where
+  data _↝↝_ {Γ : Ctx} : {C : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ C → Set where
 
     -- COMPUTATIONAL RULES
 
     apply           : {X : VType}
                       {C : CType} →
-                      (M : Γ ∷ X ⊢M⦂ C) →
+                      (M : Γ ∷ X ⊢C⦂ C) →
                       (V : Γ ⊢V⦂ X) →
                       ----------------------
                       (ƛ M) · V
                       ↝↝
-                      M [ id-subst [ V ]s ]m
+                      M [ sub-id [ V ]s ]c
 
     let-return      : {X Y : VType}
                       {o : O}
                       {i : I} → 
                       (V : Γ ⊢V⦂ X) →
-                      (N : Γ ∷ X ⊢M⦂ Y ! (o , i)) →
+                      (N : Γ ∷ X ⊢C⦂ Y ! (o , i)) →
                       -----------------------------
                       let= (return V) `in N
                       ↝↝
-                      N [ id-subst [ V ]s ]m
+                      N [ sub-id [ V ]s ]c
 
     let-↑           : {X Y : VType}
                       {o : O}
                       {i : I}
                       {op : Σₛ} →
                       (p : op ∈ₒ o) →
-                      (V : Γ ⊢V⦂ ``(payload op)) →
-                      (M : Γ ⊢M⦂ X ! (o , i)) →
-                      (N : Γ ∷ X ⊢M⦂ Y ! (o , i)) →
-                      -----------------------------
+                      (V : Γ ⊢V⦂ proj₁ (payload op)) →
+                      (M : Γ ⊢C⦂ X ! (o , i)) →
+                      (N : Γ ∷ X ⊢C⦂ Y ! (o , i)) →
+                      --------------------------------
                       let= (↑ op p V M) `in N
                       ↝↝
                       ↑ op p V (let= M `in N)
@@ -69,22 +69,22 @@ mutual
                       {i i' : I}
                       {op : Σₛ} →
                       (p : lkpᵢ op i ≡ just (o' , i')) →
-                      (M₁ : Γ ∷ ``(payload op) ⊢M⦂ ⟨ X ⟩ ! (o' , i')) →
-                      (M₂ : Γ ∷ ⟨ X ⟩ ⊢M⦂ Y ! (o , i)) →
-                      (N : Γ ∷ Y ⊢M⦂ Z ! (o , i)) →
-                      ---------------------------------------------------------------------------
+                      (M₁ : Γ ∷ proj₁ (payload op) ⊢C⦂ ⟨ X ⟩ ! (o' , i')) →
+                      (M₂ : Γ ∷ ⟨ X ⟩ ⊢C⦂ Y ! (o , i)) →
+                      (N : Γ ∷ Y ⊢C⦂ Z ! (o , i)) →
+                      ----------------------------------------------------------------------
                       let= (promise op ∣ p ↦ M₁ `in M₂) `in N
                       ↝↝
-                      (promise op ∣ p ↦ M₁ `in (let= M₂ `in (M-rename (comp-ren exchange wk₁) N)))
+                      (promise op ∣ p ↦ M₁ `in (let= M₂ `in (C-rename (ren-cong ren-wk) N)))
 
     letrec-unfold   : {X : VType}
                       {C D : CType}
-                      (M : Γ ∷ (X ⇒ C) ∷ X ⊢M⦂ C) →
-                      (N : Γ ∷ (X ⇒ C) ⊢M⦂ D) →
-                      ----------------------------------------
+                      (M : Γ ∷ (X ⇒ C) ∷ X ⊢C⦂ C) →
+                      (N : Γ ∷ (X ⇒ C) ⊢C⦂ D) →
+                      ---------------------------------------------------------------------------------------------
                       (letrec M `in N)
                       ↝↝
-                      N [ id-subst [ ƛ (letrec M-rename wk₃ M `in M-rename exchange M) ]s ]m
+                      N [ sub-id [ ƛ (letrec C-rename (ren-cong (ren-cong ren-wk)) M `in C-rename ren-exch M) ]s ]c
 
     promise-↑       : {X Y : VType}
                       {o o' : O}
@@ -92,19 +92,19 @@ mutual
                       {op op' : Σₛ} →
                       (p : lkpᵢ op i ≡ just (o' , i')) →
                       (q : op' ∈ₒ o) →
-                      (V : Γ ∷ ⟨ X ⟩ ⊢V⦂ ``(payload op')) → 
-                      (M : Γ ∷ ``(payload op) ⊢M⦂ ⟨ X ⟩ ! (o' , i')) →
-                      (N : Γ ∷ ⟨ X ⟩ ⊢M⦂ Y ! (o , i)) →
-                      --------------------------------------------
+                      (V : Γ ∷ ⟨ X ⟩ ⊢V⦂ proj₁ (payload op')) → 
+                      (M : Γ ∷ proj₁ (payload op) ⊢C⦂ ⟨ X ⟩ ! (o' , i')) →
+                      (N : Γ ∷ ⟨ X ⟩ ⊢C⦂ Y ! (o , i)) →
+                      -----------------------------------------------------------------------------------------
                       (promise op ∣ p ↦ M `in (↑ op' q V N))
                       ↝↝
-                      ↑ op' q (strengthen-val {Δ = X ∷ₗ []} V) (promise op ∣ p ↦ M `in N)
+                      ↑ op' q (strengthen-val {Δ = X ∷ₗ []} (proj₂ (payload op')) V) (promise op ∣ p ↦ M `in N)
 
     ↓-return        : {X : VType}
                       {o : O}
                       {i : I}
                       {op : Σₛ} →
-                      (V : Γ ⊢V⦂ ``(payload op)) →
+                      (V : Γ ⊢V⦂ proj₁ (payload op)) →
                       (W : Γ ⊢V⦂ X) →
                       ----------------------------------------------------------------
                       ↓ {o = o} {i = i} op V (return W)
@@ -117,10 +117,10 @@ mutual
                       {op : Σₛ}
                       {op' : Σₛ} →
                       (p : op' ∈ₒ o) →
-                      (V : Γ ⊢V⦂ ``(payload op)) →
-                      (W : Γ ⊢V⦂ ``(payload op')) →
-                      (M : Γ ⊢M⦂ X ! (o , i)) →
-                      -------------------------------
+                      (V : Γ ⊢V⦂ proj₁ (payload op)) →
+                      (W : Γ ⊢V⦂ proj₁ (payload op')) →
+                      (M : Γ ⊢C⦂ X ! (o , i)) →
+                      ---------------------------------
                       ↓ op V (↑ op' p W M)
                       ↝↝
                       ↑ op' (↓ₑ-⊑ₒ op' p) W (↓ op V M)
@@ -131,14 +131,13 @@ mutual
                       {i i' : I}
                       {op : Σₛ} →
                       (p : lkpᵢ op i ≡ just (o' , i')) →
-                      (V : Γ ⊢V⦂ ``(payload op)) → 
-                      (M : Γ ∷ ``(payload op) ⊢M⦂ ⟨ X ⟩ ! (o' , i')) →
-                      (N : Γ ∷ ⟨ X ⟩ ⊢M⦂ Y ! (o , i)) →
-                      ---------------------------------------------------------------------------------------
+                      (V : Γ ⊢V⦂ proj₁ (payload op)) → 
+                      (M : Γ ∷ proj₁ (payload op) ⊢C⦂ ⟨ X ⟩ ! (o' , i')) →
+                      (N : Γ ∷ ⟨ X ⟩ ⊢C⦂ Y ! (o , i)) →
+                      -------------------------------------------------------------------------------------------------------
                       ↓ op V (promise op ∣ p ↦ M `in N )
                       ↝↝
-                      (let= (coerce (↓ₑ-⊑ₒ-o' {o} p) (↓ₑ-⊑ₒ-i' {o} p) (M [ id-subst [ V ]s ]m)) `in
-                        ↓ op (V-rename wk₁ V) ((M-rename (comp-ren exchange wk₁) N) [ id-subst [ ` Hd ]s ]m))
+                      (let= (coerce (↓ₑ-⊑ₒ-o' {o} p) (↓ₑ-⊑ₒ-i' {o} p) (M [ sub-id [ V ]s ]c)) `in ↓ op (V-rename ren-wk V) N)
 
     ↓-promise-op'   : {X Y : VType}
                       {o o' : O}
@@ -146,9 +145,9 @@ mutual
                       {op op' : Σₛ} →
                       (p : ¬ op ≡ op') →
                       (q : lkpᵢ op' i ≡ just (o' , i')) →
-                      (V : Γ ⊢V⦂ ``(payload op)) → 
-                      (M : Γ ∷ ``(payload op') ⊢M⦂ ⟨ X ⟩ ! (o' , i')) →
-                      (N : Γ ∷ ⟨ X ⟩ ⊢M⦂ Y ! (o , i)) →
+                      (V : Γ ⊢V⦂ proj₁ (payload op)) → 
+                      (M : Γ ∷ proj₁ (payload op') ⊢C⦂ ⟨ X ⟩ ! (o' , i')) →
+                      (N : Γ ∷ ⟨ X ⟩ ⊢C⦂ Y ! (o , i)) →
                       ------------------------------------------------------------------------------------------
                       ↓ op V (promise op' ∣ q ↦ M `in N )
                       ↝↝
@@ -159,24 +158,34 @@ mutual
                                        (coerce (proj₁ (proj₂ (proj₂ (proj₂ (lkpᵢ-↓ₑ-neq {o = o} {i = i} p q)))))
                                                (proj₂ (proj₂ (proj₂ (proj₂ (lkpᵢ-↓ₑ-neq {o = o} {i = i} p q)))))
                                                M)
-                                       (↓ op (V-rename wk₁ V) N)
+                                       (↓ op (V-rename ren-wk V) N)
 
     await-promise   : {X : VType}
                       {C : CType} → 
                       (V : Γ ⊢V⦂ X) → 
-                      (M : Γ ∷ X ⊢M⦂ C) →
+                      (M : Γ ∷ X ⊢C⦂ C) →
                       --------------------
                       await ⟨ V ⟩ until M
                       ↝↝
-                      M [ id-subst [ V ]s ]m
+                      M [ sub-id [ V ]s ]c
+
+    box-unbox       : {X : VType}
+                      {C : CType} →
+                      (V : Γ ■ ⊢V⦂ X) →
+                      (M : Γ ∷ X ⊢C⦂ C) →
+                      ----------------------------------------
+                      unbox (□ V) `in M
+                      ↝↝
+                      M [ ⟨ sub-id ,, ■-str-v {Γ' = []} V ⟩ ]c
+
 
     -- INLINED EVALUATION CONTEXT RULES
 
     context-let      : {X Y : VType}
                        {o : O}
                        {i : I} → 
-                       {M M' : Γ ⊢M⦂ X ! (o , i)} →
-                       {N : Γ ∷ X ⊢M⦂ Y ! (o , i)} →
+                       {M M' : Γ ⊢C⦂ X ! (o , i)} →
+                       {N : Γ ∷ X ⊢C⦂ Y ! (o , i)} →
                        M ↝↝ M' → 
                        -----------------------------
                        let= M `in N
@@ -188,8 +197,8 @@ mutual
                        {i : I}
                        {op : Σₛ}
                        {p : op ∈ₒ o}
-                       {V : Γ ⊢V⦂ ``(payload op)}
-                       {M N : Γ ⊢M⦂ X ! (o , i)} →
+                       {V : Γ ⊢V⦂ proj₁ (payload op)}
+                       {M N : Γ ⊢C⦂ X ! (o , i)} →
                        M ↝↝ N →
                        ---------------------------
                        ↑ op p V M
@@ -200,8 +209,8 @@ mutual
                        {o : O}
                        {i : I}
                        {op : Σₛ}
-                       {V : Γ ⊢V⦂ ``(payload op)}
-                       {M N : Γ ⊢M⦂ X ! (o , i)} →
+                       {V : Γ ⊢V⦂ proj₁ (payload op)}
+                       {M N : Γ ⊢C⦂ X ! (o , i)} →
                        M ↝↝ N →
                        ---------------------------
                        ↓ op V M
@@ -213,8 +222,8 @@ mutual
                       {i i' : I}
                       {op : Σₛ} →
                       {r : lkpᵢ op i ≡ just (o' , i')}
-                      {M : Γ ∷ ``(payload op) ⊢M⦂ ⟨ X ⟩ ! (o' , i')} →
-                      {N N' : Γ ∷ ⟨ X ⟩ ⊢M⦂ Y ! (o , i)} →
+                      {M : Γ ∷ proj₁ (payload op) ⊢C⦂ ⟨ X ⟩ ! (o' , i')} →
+                      {N N' : Γ ∷ ⟨ X ⟩ ⊢C⦂ Y ! (o , i)} →
                       N ↝↝ N' →
                       ------------------------------------------------
                       promise op ∣ r ↦ M `in N
@@ -226,7 +235,7 @@ mutual
                       {i i' : I}
                       {p : o ⊑ₒ o'}
                       {q : i ⊑ᵢ i'} → 
-                      {M N : Γ ⊢M⦂ X ! (o , i)} →
+                      {M N : Γ ⊢C⦂ X ! (o , i)} →
                       M ↝↝ N →
                       ---------------------------
                       coerce p q M
@@ -251,8 +260,8 @@ mutual
                       {q : i ⊑ᵢ i'}
                       {op : Σₛ} → 
                       (r : op ∈ₒ o) →
-                      (V : Γ ⊢V⦂ ``(payload op)) →
-                      (M : Γ ⊢M⦂ X ! (o , i)) →
+                      (V : Γ ⊢V⦂ proj₁ (payload op)) →
+                      (M : Γ ⊢C⦂ X ! (o , i)) →
                       -------------------------------
                       coerce p q (↑ op r V M)
                       ↝↝
@@ -265,8 +274,8 @@ mutual
                       {q : i ⊑ᵢ i'}
                       {op : Σₛ} →
                       (r : lkpᵢ op i ≡ just (o'' , i''))
-                      (M : Γ ∷ ``(payload op) ⊢M⦂ ⟨ X ⟩ ! (o'' , i'')) →
-                      (N : Γ ∷ ⟨ X ⟩ ⊢M⦂ Y ! (o , i)) →
+                      (M : Γ ∷ proj₁ (payload op) ⊢C⦂ ⟨ X ⟩ ! (o'' , i'')) →
+                      (N : Γ ∷ ⟨ X ⟩ ⊢C⦂ Y ! (o , i)) →
                       ------------------------------------------------------------------
                       coerce p q (promise op ∣ r ↦ M `in N)
                       ↝↝
@@ -282,7 +291,7 @@ mutual
 
 ↝↝-to-↝ : {Γ : Ctx}
           {C : CType}
-          {M N : Γ ⊢M⦂ C} → 
+          {M N : Γ ⊢C⦂ C} → 
           M ↝↝ N →
           -----------------
           M ↝ N
@@ -309,6 +318,8 @@ mutual
   ↓-promise-op' p q V M N
 ↝↝-to-↝ (await-promise V M) =
   await-promise V M
+↝↝-to-↝ (box-unbox V M) =
+  box-unbox V M
 ↝↝-to-↝ (context-let r) =
   context _ (↝↝-to-↝ r)
 ↝↝-to-↝ (context-↑ r) =
@@ -332,7 +343,7 @@ mutual
                     {Δ : BCtx}
                     {C : CType} → 
                     (E : Γ ⊢E[ Δ ]⦂ C) → 
-                    {M N : (Γ ⋈ Δ) ⊢M⦂ hole-ty-e E} → 
+                    {M N : (Γ ⋈ Δ) ⊢C⦂ hole-ty-e E} → 
                     M ↝ N →
                     ---------------------------
                     E [ M ] ↝↝ E [ N ]
@@ -353,7 +364,7 @@ mutual
  
   ↝-to-↝↝ : {Γ : Ctx}
             {C : CType}
-            {M N : Γ ⊢M⦂ C} → 
+            {M N : Γ ⊢C⦂ C} → 
             M ↝ N →
             -----------------
             M ↝↝ N
@@ -380,6 +391,8 @@ mutual
     ↓-promise-op' p q V M N
   ↝-to-↝↝ (await-promise V M) =
     await-promise V M
+  ↝-to-↝↝ (box-unbox V M) =
+    box-unbox V M
   ↝-to-↝↝ (context E r) =
     ↝-context-to-↝↝ E r
   ↝-to-↝↝ (coerce-return V) =
@@ -392,12 +405,12 @@ mutual
 
 -- FINALITY OF RESULT FORMS
 
-run-invert-let : {Γ : Ctx}
+run-invert-let : {Γ : MCtx}
                  {X Y : VType}
                  {o : O}
                  {i : I}
-                 {M : ⟨⟨ Γ ⟩⟩ ⊢M⦂ X ! (o , i)}
-                 {N : (⟨⟨ Γ ⟩⟩ ∷ X) ⊢M⦂ Y ! (o , i)} →
+                 {M : ⟨⟨ Γ ⟩⟩ ⊢C⦂ X ! (o , i)}
+                 {N : (⟨⟨ Γ ⟩⟩ ∷ X) ⊢C⦂ Y ! (o , i)} →
                  RunResult⟨ Γ ∣ let= M `in N ⟩ →
                  -------------------------------------
                  RunResult⟨ Γ ∣ M ⟩
@@ -406,13 +419,13 @@ run-invert-let (awaiting (let-in R)) =
   awaiting R
 
 
-run-invert-↓ : {Γ : Ctx}
+run-invert-↓ : {Γ : MCtx}
                {X : VType}
                {o : O}
                {i : I}
                {op : Σₛ}
-               {V : ⟨⟨ Γ ⟩⟩ ⊢V⦂ ``(payload op)}
-               {M : ⟨⟨ Γ ⟩⟩ ⊢M⦂ X ! (o , i)} →
+               {V : ⟨⟨ Γ ⟩⟩ ⊢V⦂ proj₁ (payload op)}
+               {M : ⟨⟨ Γ ⟩⟩ ⊢C⦂ X ! (o , i)} →
                RunResult⟨ Γ ∣ ↓ op V M ⟩ → 
                -------------------------------
                RunResult⟨ Γ ∣ M ⟩
@@ -427,29 +440,29 @@ run-invert-↓ (awaiting (interrupt (coerce R))) =
   awaiting (coerce R)
 
 
-run-invert-promise : {Γ : Ctx}
+run-invert-promise : {Γ : MCtx}
                      {X Y : VType}
                      {o o' : O}
                      {i i' : I}
                      {op : Σₛ}
                      {p : lkpᵢ op i ≡ just (o' , i')}
-                     {M : (⟨⟨ Γ ⟩⟩ ∷ `` (payload op)) ⊢M⦂ (⟨ X ⟩ ! (o' , i'))}
-                     {N : (⟨⟨ Γ ⟩⟩ ∷ ⟨ X ⟩) ⊢M⦂ (Y ! (o , i))} → 
+                     {M : (⟨⟨ Γ ⟩⟩ ∷ proj₁ (payload op)) ⊢C⦂ (⟨ X ⟩ ! (o' , i'))}
+                     {N : (⟨⟨ Γ ⟩⟩ ∷ ⟨ X ⟩) ⊢C⦂ (Y ! (o , i))} → 
                      RunResult⟨ Γ ∣ (promise op ∣ p ↦ M `in N) ⟩ →
                      --------------------------------------------------------
-                     RunResult⟨ Γ ∷ X ∣ N ⟩
+                     RunResult⟨ Γ ∺ X ∣ N ⟩
 
 run-invert-promise (promise R) =
   R
 
 
-run-invert-coerce : {Γ : Ctx}
+run-invert-coerce : {Γ : MCtx}
                     {X : VType}
                     {o o' : O}
                     {i i' : I}
                     {p : o ⊑ₒ o'}
                     {q : i ⊑ᵢ i'}
-                    {M : ⟨⟨ Γ ⟩⟩ ⊢M⦂ X ! (o , i)} →
+                    {M : ⟨⟨ Γ ⟩⟩ ⊢C⦂ X ! (o , i)} →
                     RunResult⟨ Γ ∣ coerce p q M ⟩ →
                     -------------------------------
                     RunResult⟨ Γ ∣ M ⟩
@@ -458,10 +471,10 @@ run-invert-coerce (awaiting (coerce R)) =
   awaiting R
 
 
-run-apply-⊥ : {Γ : Ctx}
+run-apply-⊥ : {Γ : MCtx}
               {X : VType}
               {C : CType}
-              {M : (⟨⟨ Γ ⟩⟩ ∷ X) ⊢M⦂ C}
+              {M : (⟨⟨ Γ ⟩⟩ ∷ X) ⊢C⦂ C}
               {V : ⟨⟨ Γ ⟩⟩ ⊢V⦂ X} →
               RunResult⟨ Γ ∣ ƛ M · V ⟩ →
               --------------------------
@@ -470,14 +483,14 @@ run-apply-⊥ : {Γ : Ctx}
 run-apply-⊥ (awaiting ())
 
 
-run-↑-⊥ : {Γ : Ctx}
+run-↑-⊥ : {Γ : MCtx}
           {X : VType}
           {o : O}
           {i : I}
           {op : Σₛ}
           {p : op ∈ₒ o}
-          {V : ⟨⟨ Γ ⟩⟩ ⊢V⦂ ``(payload op)}
-          {M : ⟨⟨ Γ ⟩⟩ ⊢M⦂ (X ! (o , i))} → 
+          {V : ⟨⟨ Γ ⟩⟩ ⊢V⦂ proj₁ (payload op)}
+          {M : ⟨⟨ Γ ⟩⟩ ⊢C⦂ (X ! (o , i))} → 
           RunResult⟨ Γ ∣ ↑ op p V M ⟩ →
           --------------------------------
           ⊥
@@ -485,12 +498,12 @@ run-↑-⊥ : {Γ : Ctx}
 run-↑-⊥ (awaiting ())
 
 
-run-let-return-⊥ : {Γ :  Ctx}
+run-let-return-⊥ : {Γ : MCtx}
                    {X Y : VType}
                    {o : O}
                    {i : I}
                    {V : ⟨⟨ Γ ⟩⟩ ⊢V⦂ X}
-                   {N : (⟨⟨ Γ ⟩⟩ ∷ X) ⊢M⦂ (Y ! (o , i))} →
+                   {N : (⟨⟨ Γ ⟩⟩ ∷ X) ⊢C⦂ (Y ! (o , i))} →
                    RunResult⟨ Γ ∣ let= return V `in N ⟩ →
                    --------------------------------------
                    ⊥
@@ -498,24 +511,25 @@ run-let-return-⊥ : {Γ :  Ctx}
 run-let-return-⊥ (awaiting (let-in ()))
 
 
-run-let-promise-⊥ : {Γ : Ctx}
+run-let-promise-⊥ : {Γ : MCtx}
                     {X Y Z : VType}
                     {o o' : O}
                     {i i' : I}
                     {op : Σₛ}
                     {p : lkpᵢ op i ≡ just (o' , i')}
-                    {M₁ : (⟨⟨ Γ ⟩⟩ ∷ `` (payload op)) ⊢M⦂ (⟨ X ⟩ ! (o' , i'))}
-                    {M₂ : (⟨⟨ Γ ⟩⟩ ∷ ⟨ X ⟩) ⊢M⦂ (Y ! (o , i))}
-                    {N  : (⟨⟨ Γ ⟩⟩ ∷ Y) ⊢M⦂ (Z ! (o , i))} →
+                    {M₁ : (⟨⟨ Γ ⟩⟩ ∷ proj₁ (payload op)) ⊢C⦂ (⟨ X ⟩ ! (o' , i'))}
+                    {M₂ : (⟨⟨ Γ ⟩⟩ ∷ ⟨ X ⟩) ⊢C⦂ (Y ! (o , i))}
+                    {N  : (⟨⟨ Γ ⟩⟩ ∷ Y) ⊢C⦂ (Z ! (o , i))} →
                     RunResult⟨ Γ ∣ let= promise op ∣ p ↦ M₁ `in M₂ `in N ⟩ →
                     ----------------------------------------------------------
                     ⊥
 
 run-let-promise-⊥ (awaiting (let-in ()))
 
-run-finality-↝↝ : {Γ : Ctx}
+
+run-finality-↝↝ : {Γ : MCtx}
                   {C : CType}
-                  {M N : ⟨⟨ Γ ⟩⟩ ⊢M⦂ C} → 
+                  {M N : ⟨⟨ Γ ⟩⟩ ⊢C⦂ C} → 
                   RunResult⟨ Γ ∣ M ⟩ →
                   M ↝↝ N →
                   -----------------------
@@ -535,6 +549,7 @@ run-finality-↝↝ (awaiting (interrupt ())) (↓-↑ p V W M)
 run-finality-↝↝ (awaiting (interrupt ())) (↓-promise-op p V M N)
 run-finality-↝↝ (awaiting (interrupt ())) (↓-promise-op' p q V M N)
 run-finality-↝↝ (awaiting ()) (await-promise V M)
+run-finality-↝↝ (awaiting ()) (box-unbox V M)
 run-finality-↝↝ R (context-let r) =
   run-finality-↝↝ (run-invert-let R) r
 run-finality-↝↝ R (context-↑ r) =
@@ -550,9 +565,9 @@ run-finality-↝↝ (awaiting (coerce ())) (coerce-↑ p V M)
 run-finality-↝↝ (awaiting (coerce ())) (coerce-promise p M N)
 
 
-comp-finality-↝↝ : {Γ : Ctx}
+comp-finality-↝↝ : {Γ : MCtx}
                    {C : CType}
-                   {M N : ⟨⟨ Γ ⟩⟩ ⊢M⦂ C} → 
+                   {M N : ⟨⟨ Γ ⟩⟩ ⊢C⦂ C} → 
                    CompResult⟨ Γ ∣ M ⟩ →
                    M ↝↝ N →
                    -----------------------
@@ -564,11 +579,9 @@ comp-finality-↝↝ (signal R) (context-↑ r) =
   comp-finality-↝↝ R r
 
 
-{- LEMMA 3.2 -}
-
-comp-finality : {Γ : Ctx}
+comp-finality : {Γ : MCtx}
                 {C : CType}
-                {M N : ⟨⟨ Γ ⟩⟩ ⊢M⦂ C} → 
+                {M N : ⟨⟨ Γ ⟩⟩ ⊢C⦂ C} → 
                 CompResult⟨ Γ ∣ M ⟩ →
                 M ↝ N →
                 -----------------------
@@ -576,3 +589,4 @@ comp-finality : {Γ : Ctx}
 
 comp-finality R r =
   comp-finality-↝↝ R (↝-to-↝↝ r)
+

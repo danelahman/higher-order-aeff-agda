@@ -50,8 +50,6 @@ data _⇝_ : {o o' : O} → PType o → PType o' → Set where
 
 -- REDUCTION OF PROCESS TYPES IS REFLEXIVE
 
-{- LEMMA 4.4 (1) -}
-
 ⇝-refl : {o : O} {PP : PType o} → PP ⇝ PP
 ⇝-refl {o} {X ‼ o , i} =
   id
@@ -60,8 +58,6 @@ data _⇝_ : {o o' : O} → PType o → PType o' → Set where
 
 
 -- ACTION OF INTERRUPTS ON GENERAL PROCESS TYPES IS A REDUCTION
-
-{- LEMMA 4.4 (2) -}
 
 ⇝-↓ₚ : {o : O}
        {PP : PType o}
@@ -76,8 +72,6 @@ data _⇝_ : {o o' : O} → PType o → PType o' → Set where
 
 
 -- ACTION OF INTERRUPTS PRESERVES PROCESS TYPE REDUCTION
-
-{- LEMMA 4.4 (3) -}
 
 ⇝-↓ₚ-cong : {o o' : O}
             {PP : PType o}
@@ -96,8 +90,6 @@ data _⇝_ : {o o' : O} → PType o → PType o' → Set where
 
 
 -- PROCESS TYPE REDUCTION INCREASES SIGNAL INDEX
-
-{- LEMMA 4.4 (4) -}
 
 inj-proj₁ : {X Y : Set} {xy xy' : X × Y} → xy ≡ xy' → proj₁ xy ≡ proj₁ xy'
 inj-proj₁ refl = refl
@@ -257,8 +249,6 @@ _[_]f : {Γ : Ctx} {o : O} {PP : PType o} → (F : Γ ⊢F⦂ PP) → (P : Γ �
     ⇝-f-∈ₒ-aux (o'' , RR , r) q =
       ⇝-⊑ₒ (⇝-↓ₚ-cong r)
 
-{- LEMMA 4.6 -}
-
 ⇝-f : {Γ : Ctx}
       {o o' : O} 
       {PP : PType o}
@@ -337,8 +327,6 @@ subst-i Y Z refl refl z = z
 
 -- SMALL-STEP OPERATIONAL SEMANTICS FOR WELL-TYPED PROCESSES
 -- (ADDITIONALLY SERVES AS THE PRESERVATION THEOREM)
-
-{- THEOREM 4.7 -}
 
 infix 10 _[_]↝_
 
