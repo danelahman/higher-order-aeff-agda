@@ -15,18 +15,18 @@ module AwaitingComputations where
 
 -- COMPUTATIONS THAT ARE TEMPORARILY STUCK DUE TO AWAITING FOR A PARTICULAR PROMISE
     
-data _⧗_ {Γ : Ctx} {X : VType} (x : ⟨ X ⟩ ∈ Γ) : {C : CType} → Γ ⊢M⦂ C → Set where
+data _⧗_ {Γ : Ctx} {X : VType} (x : ⟨ X ⟩ ∈ Γ) : {C : CType} → Γ ⊢C⦂ C → Set where
 
   await     : {C : CType}
-              {M : Γ ∷ X ⊢M⦂ C} →
+              {M : Γ ∷ X ⊢C⦂ C} →
               -------------------------
               x ⧗ (await (` x) until M)
 
   let-in    : {X Y : VType}
               {o : O}
               {i : I}
-              {M : Γ ⊢M⦂ X ! (o , i)}
-              {N : Γ ∷ X ⊢M⦂ Y ! (o , i)} →
+              {M : Γ ⊢C⦂ X ! (o , i)}
+              {N : Γ ∷ X ⊢C⦂ Y ! (o , i)} →
               x ⧗ M →
               -----------------------------
               x ⧗ (let= M `in N)
@@ -35,8 +35,8 @@ data _⧗_ {Γ : Ctx} {X : VType} (x : ⟨ X ⟩ ∈ Γ) : {C : CType} → Γ �
               {o : O}
               {i : I}
               {op : Σₛ}
-              {V : Γ ⊢V⦂ ``(payload op)}
-              {M : Γ ⊢M⦂ X ! (o , i)} →
+              {V : Γ ⊢V⦂ proj₁ (payload op)}
+              {M : Γ ⊢C⦂ X ! (o , i)} →
               x ⧗ M →
               -------------------------
               x ⧗ (↓ op V M)
@@ -46,7 +46,7 @@ data _⧗_ {Γ : Ctx} {X : VType} (x : ⟨ X ⟩ ∈ Γ) : {C : CType} → Γ �
               {i i' : I}
               {p : o ⊑ₒ o'}
               {q : i ⊑ᵢ i'}
-              {M : Γ ⊢M⦂ X ! (o , i)} →
+              {M : Γ ⊢C⦂ X ! (o , i)} →
               x ⧗ M →
               -------------------------
               x ⧗ (coerce p q M)

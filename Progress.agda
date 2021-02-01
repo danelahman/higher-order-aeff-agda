@@ -9,7 +9,7 @@ open import AwaitingComputations
 open import EffectAnnotations
 open import Preservation
 open import Renamings
-open import Substitutions
+open import Substitutions renaming (⟨_,_⟩ to ⟨_,,_⟩)
 open import Types
 
 open import Relation.Binary.PropositionalEquality hiding ([_])
@@ -18,16 +18,23 @@ open import Relation.Nullary.Negation
 
 module Progress where
 
--- WRAPPING PROMISES AROUND A CONTEXT
+-- MOBILE CONTEXTS (CONSIST OF ONLY VARIABLE BINDINGS)
 
-⟨⟨_⟩⟩ : Ctx → Ctx
+data MCtx : Set where
+  [] : MCtx
+  _∺_ : MCtx → VType → MCtx
+
+
+-- WRAPPING PROMISES AROUND A MOBILE CONTEXT
+
+⟨⟨_⟩⟩ : MCtx → Ctx
 ⟨⟨ [] ⟩⟩ = []
-⟨⟨ Γ ∷ X ⟩⟩ = ⟨⟨ Γ ⟩⟩ ∷ ⟨ X ⟩
+⟨⟨ Γ ∺ X ⟩⟩ = ⟨⟨ Γ ⟩⟩ ∷ ⟨ X ⟩
 
 
 -- RESULTS
 
-data RunResult⟨_∣_⟩ (Γ : Ctx) : {C : CType} → ⟨⟨ Γ ⟩⟩ ⊢M⦂ C → Set where
+data RunResult⟨_∣_⟩ (Γ : MCtx) : {C : CType} → ⟨⟨ Γ ⟩⟩ ⊢C⦂ C → Set where
 
   return   : {X : VType}
              {o : O}
@@ -41,24 +48,24 @@ data RunResult⟨_∣_⟩ (Γ : Ctx) : {C : CType} → ⟨⟨ Γ ⟩⟩ ⊢M⦂ 
              {i i' : I}
              {op : Σₛ}
              {p : lkpᵢ op i ≡ just (o' , i')}
-             {M : ⟨⟨ Γ ⟩⟩ ∷ ``(payload op) ⊢M⦂ ⟨ X ⟩ ! (o' , i')}
-             {N : ⟨⟨ Γ ⟩⟩ ∷ ⟨ X ⟩ ⊢M⦂ Y ! (o , i)} →
-             RunResult⟨ Γ ∷ X ∣ N ⟩ →
+             {M : ⟨⟨ Γ ⟩⟩ ∷ proj₁ (payload op) ⊢C⦂ ⟨ X ⟩ ! (o' , i')}
+             {N : ⟨⟨ Γ ⟩⟩ ∷ ⟨ X ⟩ ⊢C⦂ Y ! (o , i)} →
+             RunResult⟨ Γ ∺ X ∣ N ⟩ →
              ----------------------------------------------------
              RunResult⟨ Γ ∣ promise op ∣ p ↦ M `in N ⟩
 
   awaiting : {C : CType}
              {Y : VType}
              {y : ⟨ Y ⟩ ∈ ⟨⟨ Γ ⟩⟩}
-             {M : ⟨⟨ Γ ⟩⟩ ⊢M⦂ C} → 
+             {M : ⟨⟨ Γ ⟩⟩ ⊢C⦂ C} → 
              y ⧗ M →
              ---------------------
              RunResult⟨ Γ ∣ M ⟩
 
-data CompResult⟨_∣_⟩ (Γ : Ctx) : {C : CType} → ⟨⟨ Γ ⟩⟩ ⊢M⦂ C → Set where
+data CompResult⟨_∣_⟩ (Γ : MCtx) : {C : CType} → ⟨⟨ Γ ⟩⟩ ⊢C⦂ C → Set where
 
   comp   : {C : CType}
-           {M : ⟨⟨ Γ ⟩⟩ ⊢M⦂ C} →
+           {M : ⟨⟨ Γ ⟩⟩ ⊢C⦂ C} →
            RunResult⟨ Γ ∣ M ⟩ →
            ---------------------
            CompResult⟨ Γ ∣ M ⟩
@@ -68,8 +75,8 @@ data CompResult⟨_∣_⟩ (Γ : Ctx) : {C : CType} → ⟨⟨ Γ ⟩⟩ ⊢M⦂
            {i : I}
            {op : Σₛ}
            {p : op ∈ₒ o}
-           {V : ⟨⟨ Γ ⟩⟩ ⊢V⦂ ``(payload op)}
-           {M : ⟨⟨ Γ ⟩⟩ ⊢M⦂ X ! (o , i)} →
+           {V : ⟨⟨ Γ ⟩⟩ ⊢V⦂ proj₁ (payload op)}
+           {M : ⟨⟨ Γ ⟩⟩ ⊢C⦂ X ! (o , i)} →
            CompResult⟨ Γ ∣ M ⟩ →
            --------------------------------
            CompResult⟨ Γ ∣ ↑ op p V M ⟩
@@ -77,18 +84,22 @@ data CompResult⟨_∣_⟩ (Γ : Ctx) : {C : CType} → ⟨⟨ Γ ⟩⟩ ⊢M⦂
 
 -- PROGRESS THEOREM FOR PROMISE-OPEN COMPUTATIONS
 
-⇒-not-in-ctx : {Γ : Ctx} {X : VType} {C : CType} → X ⇒ C ∈ ⟨⟨ Γ ⟩⟩ → ⊥
-⇒-not-in-ctx {Γ ∷ y} (Tl x) =
-  ⇒-not-in-ctx x
+□-not-in-mctx : {Γ : MCtx} {X : VType} → □ X ∈ ⟨⟨ Γ ⟩⟩ → ⊥
+□-not-in-mctx {Γ ∺ Y} (Tl-v x) =
+  □-not-in-mctx x
 
+
+⇒-not-in-mctx : {Γ : MCtx} {X : VType} {C : CType} → X ⇒ C ∈ ⟨⟨ Γ ⟩⟩ → ⊥
+⇒-not-in-mctx {Γ ∺ Y} (Tl-v x) =
+  ⇒-not-in-mctx x
 
 {- THEOREM 3.3 -}  
 
-progress : {Γ : Ctx}
+progress : {Γ : MCtx}
            {C : CType} →
-           (M : ⟨⟨ Γ ⟩⟩ ⊢M⦂ C) →
+           (M : ⟨⟨ Γ ⟩⟩ ⊢C⦂ C) →
            -------------------------------
-           (Σ[ N ∈ ⟨⟨ Γ ⟩⟩ ⊢M⦂ C ] (M ↝ N)
+           (Σ[ N ∈ ⟨⟨ Γ ⟩⟩ ⊢C⦂ C ] (M ↝ N)
             ⊎
             CompResult⟨ Γ ∣ M ⟩)
 
@@ -107,7 +118,7 @@ progress (let= M `in N) with progress M
   inj₁ (_ , let-↑ p V M' N)
 progress (letrec M `in N) =
   inj₁ (_ , letrec-unfold M N)
-progress ((` x) · W) with ⇒-not-in-ctx x
+progress ((` x) · W) with ⇒-not-in-mctx x
 ... | ()
 progress (ƛ M · W) =
   inj₁ (_ , apply M W)
@@ -141,6 +152,10 @@ progress (await ` x until M) =
   inj₂ (comp (awaiting await))
 progress (await ⟨ V ⟩ until M) =
   inj₁ (_ , await-promise V M)
+progress (unbox ` x `in M) with □-not-in-mctx x
+... | ()
+progress (unbox (□ V) `in M) =
+  inj₁ (M [ ⟨ sub-of-ren ren-id ,, ■-str-v {Γ' = []} V ⟩ ]c , box-unbox V M)
 progress (coerce p q M) with progress M
 ... | inj₁ (M' , r) =
   inj₁ (_ , context (coerce p q [-]) r)
@@ -159,11 +174,12 @@ progress (coerce p q M) with progress M
 {- COROLLARY 3.4 -}
 
 closed-progress : {C : CType} →
-                  (M : [] ⊢M⦂ C) →
+                  (M : [] ⊢C⦂ C) →
                   --------------------------
-                  (Σ[ N ∈ [] ⊢M⦂ C ] (M ↝ N)
+                  (Σ[ N ∈ [] ⊢C⦂ C ] (M ↝ N)
                    ⊎
                    CompResult⟨ [] ∣ M ⟩)
 
 closed-progress M =
   progress M
+

@@ -9,11 +9,6 @@ open import Relation.Binary.PropositionalEquality hiding ([_])
 
 module Substitutions where
 
-{-
-Sub : Ctx → Ctx → Set
-Sub Γ Γ' = {X : VType} → X ∈-∷ Γ → Γ' ⊢V⦂ X
--}
-
 -- PARALLEL SUBSTITUTIONS
 
 data Sub : Ctx → Ctx → Set where
