@@ -1,4 +1,6 @@
-# Agda formalisation of the AEff language
+# Agda formalisation of the Modal† AEff language
+
+_†Modal types are used to generalise the original calculus's signal/interrupt payload types (to allow effectful functions etc)._
 
 - The formalisation has been tested with Agda version 2.6.1 and standard library version 1.3.
 
