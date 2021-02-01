@@ -43,14 +43,14 @@ ren-var ⟨ f , x ⟩ Hd =
   x
 ren-var (π f) Hd =
   Tl-v (ren-var f Hd)
-ren-var ⟨ f , x₁ ⟩ (Tl-v x) =
+ren-var ⟨ f , y ⟩ (Tl-v x) =
   ren-var f x
 ren-var (π f) (Tl-v x) =
   Tl-v (ren-var f (Tl-v x))
-ren-var (π f) (Tl-■ x x₁) =
-  Tl-v (ren-var f (Tl-■ x x₁))
-ren-var (φ f) (Tl-■ x x₁) =
-  Tl-■ x (ren-var f x₁)
+ren-var (π f) (Tl-■ p x) =
+  Tl-v (ren-var f (Tl-■ p x))
+ren-var (φ f) (Tl-■ p x) =
+  Tl-■ p (ren-var f x)
 
 
 -- IDENTITY RENAMING
@@ -78,24 +78,24 @@ ren-exch {Γ} = ⟨ ⟨ π (π ren-id) , Hd ⟩ , Tl-v Hd ⟩
 
 -- COMPOSITION OF RENAMINGS
 
-comp-ren : {Γ Γ' Γ'' : Ctx} →
+ren-comp : {Γ Γ' Γ'' : Ctx} →
            Ren Γ' Γ'' →
            Ren Γ Γ' →
            ------------------
            Ren Γ Γ''
            
-comp-ren g ⟨ f , x ⟩ =
-  ⟨ comp-ren g f , ren-var g x ⟩
-comp-ren g ε =
+ren-comp g ⟨ f , x ⟩ =
+  ⟨ ren-comp g f , ren-var g x ⟩
+ren-comp g ε =
   ε
-comp-ren ⟨ g , x ⟩ (π f) =
-  comp-ren g f
-comp-ren (π g) (π f) =
-  π (comp-ren g (π f))
-comp-ren (π g) (φ f) =
-  π (comp-ren g (φ f))
-comp-ren (φ g) (φ f) =
-  φ (comp-ren g f)
+ren-comp ⟨ g , x ⟩ (π f) =
+  ren-comp g f
+ren-comp (π g) (π f) =
+  π (ren-comp g (π f))
+ren-comp (π g) (φ f) =
+  π (ren-comp g (φ f))
+ren-comp (φ g) (φ f) =
+  φ (ren-comp g f)
 
 
 -- WEAKENING OF RENAMINGS
