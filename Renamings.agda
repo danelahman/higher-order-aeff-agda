@@ -33,7 +33,12 @@ data Ren : Ctx → Ctx → Set where
 
 -- RENAMING VARIABLES
 
-ren-var : {Γ Γ' : Ctx} {X : VType} → Ren Γ Γ' → X ∈ Γ → X ∈ Γ'
+ren-var : {Γ Γ' : Ctx} {X : VType} →
+          Ren Γ Γ' →
+          X ∈ Γ →
+          --------------------------
+          X ∈ Γ'
+          
 ren-var ⟨ f , x ⟩ Hd =
   x
 ren-var (π f) Hd =
@@ -50,18 +55,35 @@ ren-var (φ f) (Tl-■ x x₁) =
 
 -- IDENTITY RENAMING
 
-id-ren : {Γ : Ctx} → Ren Γ Γ 
-id-ren {[]} =
+ren-id : {Γ : Ctx} →
+         -----------
+         Ren Γ Γ
+         
+ren-id {[]} =
   ε
-id-ren {Γ ∷ X} =
-  ⟨ π id-ren , Hd ⟩
-id-ren {Γ ■} =
-  φ id-ren
+ren-id {Γ ∷ X} =
+  ⟨ π ren-id , Hd ⟩
+ren-id {Γ ■} =
+  φ ren-id
+
+
+-- EXCHANGE RENAMING
+
+ren-exch : {Γ : Ctx} {X Y : VType} →
+           ---------------------------
+           Ren (Γ ∷ X ∷ Y) (Γ ∷ Y ∷ X)
+
+ren-exch {Γ} = ⟨ ⟨ π (π ren-id) , Hd ⟩ , Tl-v Hd ⟩
 
 
 -- COMPOSITION OF RENAMINGS
 
-comp-ren : {Γ Γ' Γ'' : Ctx} → Ren Γ' Γ'' → Ren Γ Γ' → Ren Γ Γ''
+comp-ren : {Γ Γ' Γ'' : Ctx} →
+           Ren Γ' Γ'' →
+           Ren Γ Γ' →
+           ------------------
+           Ren Γ Γ''
+           
 comp-ren g ⟨ f , x ⟩ =
   ⟨ comp-ren g f , ren-var g x ⟩
 comp-ren g ε =
@@ -78,44 +100,52 @@ comp-ren (φ g) (φ f) =
 
 -- WEAKENING OF RENAMINGS
 
-ren-wk₁ : {Γ : Ctx} {X : VType} → Ren Γ (Γ ∷ X)
-ren-wk₁ {[]} =
-  ε
-ren-wk₁ {Γ ∷ X} =
-  π ⟨ ren-wk₁ , Hd ⟩
-ren-wk₁ {Γ ■} =
-  π (φ id-ren)
-  
-ren-wk₂ : {Γ : Ctx} {X Y Z : VType} → Ren (Γ ∷ Y ∷ Z) (Γ ∷ X ∷ Y ∷ Z)
-ren-wk₂ =
-  ⟨ π ⟨ π ren-wk₁ , Hd ⟩ , Hd ⟩
+ren-wk : {Γ : Ctx} {X : VType} →
+         -----------------------
+         Ren Γ (Γ ∷ X)
+         
+ren-wk =
+  π ren-id
 
 
 -- CONGRUENCE OF RENAMINGS
 
-ren-cong : {Γ Γ' : Ctx} {X : VType} → Ren Γ Γ' → Ren (Γ ∷ X) (Γ' ∷ X)
-ren-cong ε =
-  ⟨ ε , Hd ⟩
-ren-cong ⟨ f , x ⟩ =
-  ⟨ π ⟨ f , x ⟩ , Hd ⟩
-ren-cong (π f) =
-  ⟨ π (π f) , Hd ⟩
-ren-cong (φ f) =
-  ⟨ π (φ f) , Hd ⟩
+ren-cong : {Γ Γ' : Ctx} {X : VType} →
+           Ren Γ Γ' →
+           --------------------------
+           Ren (Γ ∷ X) (Γ' ∷ X)
+           
+ren-cong f =
+  ⟨ π f , Hd ⟩
 
 
 -- ACTION OF RENAMING ON WELL-TYPED VALUES AND COMPUTATIONS
 
 mutual
 
-  V-rename : {X : VType} {Γ Γ' : Ctx} → Ren Γ Γ' → Γ ⊢V⦂ X → Γ' ⊢V⦂ X
-  V-rename f (` x) = ` ren-var f x
-  V-rename f (´ c) = ´ c
-  V-rename f (ƛ M) = ƛ (C-rename (ren-cong f) M)
-  V-rename f ⟨ V ⟩ = ⟨ V-rename f V ⟩
-  V-rename f (□ V) = □ (V-rename (φ f) V)
+  V-rename : {X : VType} {Γ Γ' : Ctx} →
+             Ren Γ Γ' →
+             Γ ⊢V⦂ X →
+             --------------------------
+             Γ' ⊢V⦂ X
+             
+  V-rename f (` x) =
+    ` ren-var f x
+  V-rename f (´ c) =
+    ´ c
+  V-rename f (ƛ M) =
+    ƛ (C-rename (ren-cong f) M)
+  V-rename f ⟨ V ⟩ =
+    ⟨ V-rename f V ⟩
+  V-rename f (□ V) =
+    □ (V-rename (φ f) V)
 
-  C-rename : {C : CType} {Γ Γ' : Ctx} → Ren Γ Γ' → Γ ⊢C⦂ C → Γ' ⊢C⦂ C
+  C-rename : {C : CType} {Γ Γ' : Ctx} →
+             Ren Γ Γ' →
+             Γ ⊢C⦂ C →
+             --------------------------
+             Γ' ⊢C⦂ C
+  
   C-rename f (return V) =
     return (V-rename f V)
   C-rename f (let= M `in N) =

@@ -54,26 +54,14 @@ sub-of-ren (φ f) =
 
 -- IDENTITY SUBSTITUTION
 
-id-sub : {Γ : Ctx} → Sub Γ Γ
-id-sub {[]} =
-  ε
-id-sub {Γ ∷ X} =
-  ⟨ π id-sub , ` Hd ⟩
-id-sub {Γ ■} =
-  φ id-sub
+sub-id : {Γ : Ctx} → Sub Γ Γ
+sub-id = sub-of-ren ren-id
 
 
 -- SUBSTITUTION EXTENSION
 
 _[_]s : {Γ Γ' : Ctx} {X : VType} → Sub Γ Γ' → Γ' ⊢V⦂ X → Sub (Γ ∷ X) Γ'
-⟨ s , x ⟩ [ V ]s =
-  ⟨ s [ x ]s , V ⟩
-ε [ V ]s =
-  ⟨ ε , V ⟩
-(π s) [ V ]s =
-  ⟨ π s , V ⟩
-(φ s) [ V ]s =
-  ⟨ φ s , V ⟩
+s [ V ]s = ⟨ s , V ⟩
 
 
 -- LIFTING SUBSTITUTIONS
@@ -97,7 +85,7 @@ val-of-sub ⟨ s , V ⟩ Hd =
 val-of-sub ⟨ s , V ⟩ (Tl-v x) =
   val-of-sub s x
 val-of-sub (π s) x =
-  V-rename ren-wk₁ (val-of-sub s x)
+  V-rename ren-wk (val-of-sub s x)
 val-of-sub (φ s) (Tl-■ p x) =
   ■-wk p (val-of-sub s x)
 
@@ -110,13 +98,13 @@ mutual
   sub-var Hd ⟨ s , V ⟩ =
     V
   sub-var Hd (π s) =
-    V-rename ren-wk₁ (val-of-sub s Hd)
+    V-rename ren-wk (val-of-sub s Hd)
   sub-var (Tl-v x) ⟨ s , V ⟩ =
     sub-var x s
   sub-var (Tl-v x) (π s) =
-    V-rename ren-wk₁ (val-of-sub s (Tl-v x))
+    V-rename ren-wk (val-of-sub s (Tl-v x))
   sub-var (Tl-■ p x) (π s) =
-    V-rename ren-wk₁ (val-of-sub s (Tl-■ p x))
+    V-rename ren-wk (val-of-sub s (Tl-■ p x))
   sub-var (Tl-■ p x) (φ s) =
     ■-wk p (val-of-sub s x)
 

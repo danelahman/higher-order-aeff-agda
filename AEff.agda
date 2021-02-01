@@ -278,3 +278,64 @@ mutual
   ´ c
 ■-wk p (□ V) =
   □ (■-dup-v {_} {[]} V)
+
+
+■-str-var : {Γ Γ' : Ctx} {X : VType} →
+            X ∈ Γ ■ ++ₖ Γ' →
+            --------------------------
+            X ∈ Γ ++ₖ Γ'
+
+■-str-var {Γ} {[]} (Tl-■ p x) =
+  x
+■-str-var {Γ} {Γ' ∷ Y} Hd =
+  Hd
+■-str-var {Γ} {Γ' ∷ Y} (Tl-v x) =
+  Tl-v (■-str-var x)
+■-str-var {Γ} {Γ' ■} (Tl-■ p x) =
+  Tl-■ p (■-str-var x)
+
+
+mutual
+
+  ■-str-v : {Γ Γ' : Ctx} {X : VType} →
+            Γ ■ ++ₖ Γ' ⊢V⦂ X →
+            -----------------------
+            Γ ++ₖ Γ' ⊢V⦂ X
+
+  ■-str-v (` x) =
+    ` ■-str-var x
+  ■-str-v (´ c) =
+    ´ c
+  ■-str-v (ƛ M) =
+    ƛ (■-str-c M)
+  ■-str-v ⟨ V ⟩ =
+    ⟨ ■-str-v V ⟩
+  ■-str-v {Γ} {Γ'} (□ V) =
+    □ (■-str-v {Γ} {Γ' ■} V)
+
+
+  ■-str-c : {Γ Γ' : Ctx} {C : CType} →
+            Γ ■ ++ₖ Γ' ⊢C⦂ C →
+            -----------------------
+            Γ ++ₖ Γ' ⊢C⦂ C
+
+  ■-str-c (return V) =
+    return (■-str-v V)
+  ■-str-c (let= M `in N) =
+    let= (■-str-c M) `in (■-str-c N)
+  ■-str-c (letrec M `in N) =
+    letrec (■-str-c M) `in (■-str-c N)
+  ■-str-c (V · W) =
+    (■-str-v V) · (■-str-v W)
+  ■-str-c (↑ op p V M) =
+    ↑ op p (■-str-v V) (■-str-c M)
+  ■-str-c (↓ op V M) =
+    ↓ op (■-str-v V) (■-str-c M)
+  ■-str-c (promise op ∣ p ↦ M `in N) =
+    promise op ∣ p ↦ (■-str-c M) `in (■-str-c N)
+  ■-str-c (await V until M) =
+    await (■-str-v V) until (■-str-c M)
+  ■-str-c (unbox V `in M) =
+    unbox (■-str-v V) `in (■-str-c M)
+  ■-str-c (coerce p q M) =
+    coerce p q (■-str-c M)
