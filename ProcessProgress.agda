@@ -28,7 +28,7 @@ data ParResult⟨_⟩ : {o : O} {PP : PType o} → [] ⊢P⦂ PP → Set where
   run    : {X : VType}
            {o : O}
            {i : I} → 
-           {M : [] ⊢M⦂ X ! (o , i)} →
+           {M : [] ⊢C⦂ X ! (o , i)} →
            RunResult⟨ [] ∣ M ⟩ →
            --------------------------
            ParResult⟨ run M ⟩
@@ -56,7 +56,7 @@ data ProcResult⟨_⟩ : {o : O} {PP : PType o} → [] ⊢P⦂ PP → Set where
            {PP : PType o}
            {op : Σₛ}
            {p : op ∈ₒ o}
-           {V : [] ⊢V⦂ ``(payload op)}
+           {V : [] ⊢V⦂ proj₁ (payload op)}
            {P : [] ⊢P⦂ PP} →
            ProcResult⟨ P ⟩ →
            ---------------------------
