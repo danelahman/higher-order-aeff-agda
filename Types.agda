@@ -10,11 +10,9 @@ open import EffectAnnotations
 
 module Types where
 
--- BASE AND GROUND TYPES
+-- BASE TYPES
 
-postulate BType : Set -- set of base types
-
-postulate dec-bty : (B B' : BType) → Dec (B ≡ B')
+postulate BType : Set
 
 
 -- VALUE AND COMPUTATION TYPES
