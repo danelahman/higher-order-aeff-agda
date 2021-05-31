@@ -21,31 +21,31 @@ infix 10 _⇝_
 
 data _⇝_ : {o o' : O} → PType o → PType o' → Set where
 
-  id  : {X : VType}
-        {o : O}
-        {i : I} → 
-        ----------------------
-        X ‼ o , i ⇝ X ‼ o , i
+  id    : {X : VType}
+          {o : O}
+          {i : I} → 
+          ----------------------
+          X ‼ o , i ⇝ X ‼ o , i
 
-  act : {X : VType}
-        {o o' o'' : O}
-        {i i' i'' : I} →
-        (ops : List Σₛ) →
-        (op : Σₛ) →   
-        (o' , i') ≡ ops ↓↓ₑ (o , i) →
-        (o'' , i'') ≡ ((ops ++ [ op ]ₗ) ↓↓ₑ (o , i)) → 
-        ----------------------------------------------
-        (X ‼ o' , i') ⇝ (X ‼ o'' , i'')
+  act   : {X : VType}
+          {o o' o'' : O}
+          {i i' i'' : I} →
+          (ops : List Σₛ) →
+          (op : Σₛ) →   
+          (o' , i') ≡ ops ↓↓ₑ (o , i) →
+          (o'' , i'') ≡ ((ops ++ [ op ]ₗ) ↓↓ₑ (o , i)) → 
+          ----------------------------------------------
+          (X ‼ o' , i') ⇝ (X ‼ o'' , i'')
 
-  par : {o o' o'' o''' : O}
-        {PP : PType o}
-        {QQ : PType o'}
-        {PP' : PType o''}
-        {QQ' : PType o'''} → 
-        PP ⇝ PP' →
-        QQ ⇝ QQ' →
-        ----------------------
-        (PP ∥ QQ) ⇝ (PP' ∥ QQ')
+  par   : {o o' o'' o''' : O}
+          {PP : PType o}
+          {QQ : PType o'}
+          {PP' : PType o''}
+          {QQ' : PType o'''} → 
+          PP ⇝ PP' →
+          QQ ⇝ QQ' →
+          ----------------------
+          (PP ∥ QQ) ⇝ (PP' ∥ QQ')
 
   spawn : {X Y : VType}
           {o o' : O}

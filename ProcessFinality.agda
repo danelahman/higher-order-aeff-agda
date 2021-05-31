@@ -120,6 +120,18 @@ data _[_]↝↝_ {Γ : Ctx} : {o o' : O} {PP : PType o} {QQ : PType o'} → Γ �
           [ id ]↝↝
           ↑ op p V (run M)
 
+  -- PROCESS SPAWNING RULE
+
+  spawn   : {X Y : VType}
+            {o o' : O}
+            {i i' : I} →
+            (M : Γ ■ ⊢C⦂ X ! (o , i)) →
+            (N : Γ ⊢C⦂ Y ! (o' , i')) →
+            ---------------------------
+            run (spawn M N)
+            [ spawn ]↝↝
+            run (■-str-c {Γ' = []} M) ∥ run N
+
   -- EVALUATION CONTEXT RULES
 
   context-∥ₗ : {o o' o'' : O}
@@ -207,6 +219,8 @@ data _[_]↝↝_ {Γ : Ctx} : {o o' : O} {PP : PType o} {QQ : PType o'} → Γ �
   ↓-↑ p V W P
 []↝↝-to-[]↝ (↑ p V M) =
   ↑ p V M
+[]↝↝-to-[]↝ (spawn M N) =
+  spawn M N
 []↝↝-to-[]↝ (context-∥ₗ r) =
   context (_ ∥ₗ _) ([]↝↝-to-[]↝ r)
 []↝↝-to-[]↝ (context-∥ᵣ r) =
@@ -297,6 +311,8 @@ mutual
     ↓-∥ V P Q
   []↝-to-[]↝↝ (↓-↑ p V W P) =
     ↓-↑ p V W P
+  []↝-to-[]↝↝ (spawn M N) =
+    spawn M N
   []↝-to-[]↝↝ (↑ p V M) =
     ↑ p V M
   []↝-to-[]↝↝ (context F r) =
@@ -320,6 +336,8 @@ par-finality-↝↝ (run R) .id (run r) =
   run-finality-↝↝ R r 
 par-finality-↝↝ (run R) .id (↑ p V M) =
   run-↑-⊥ R
+par-finality-↝↝ (run R) .spawn (spawn M N) =
+  run-spawn-⊥ R
 par-finality-↝↝ (par R S) .(par _ ⇝-refl) (context-∥ₗ r') =
   par-finality-↝↝ R _ r'
 par-finality-↝↝ (par R S) .(par ⇝-refl _) (context-∥ᵣ r') =

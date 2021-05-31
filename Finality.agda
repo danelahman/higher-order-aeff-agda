@@ -77,6 +77,18 @@ mutual
                       ↝↝
                       (promise op ∣ p ↦ M₁ `in (let= M₂ `in (C-rename (ren-cong ren-wk) N)))
 
+    let-spawn       : {X Y : VType}
+                      {C : CType}
+                      {o : O}
+                      {i : I} → 
+                      (M : Γ ■ ⊢C⦂ C) → 
+                      (N : Γ ⊢C⦂ X ! (o , i)) →
+                      (K : Γ ∷ X ⊢C⦂ Y ! (o , i)) →
+                      ---------------------------------------
+                      let= (spawn M N) `in K
+                      ↝↝
+                      spawn M (let= N `in K)
+
     letrec-unfold   : {X : VType}
                       {C D : CType}
                       (M : Γ ∷ (X ⇒ C) ∷ X ⊢C⦂ C) →
@@ -99,6 +111,20 @@ mutual
                       (promise op ∣ p ↦ M `in (↑ op' q V N))
                       ↝↝
                       ↑ op' q (strengthen-val {Δ = X ∷ₗ []} (proj₂ (payload op')) V) (promise op ∣ p ↦ M `in N)
+
+    promise-spawn   : {X Y : VType}
+                      {C : CType}
+                      {o o' : O}
+                      {i i' : I}
+                      {op : Σₛ} →
+                      (p : lkpᵢ op i ≡ just (o' , i')) →
+                      (M : Γ ∷ proj₁ (payload op) ⊢C⦂ ⟨ X ⟩ ! (o' , i')) →
+                      (N : Γ ∷ ⟨ X ⟩ ■ ⊢C⦂ C) → 
+                      (K : Γ ∷ ⟨ X ⟩ ⊢C⦂ Y ! (o , i)) →
+                      ---------------------------------------------------------------------------
+                      (promise op ∣ p ↦ M `in (spawn N K))
+                      ↝↝
+                      spawn (strengthen-■-c {Γ' = []} {Δ = X ∷ₗ []} N) (promise op ∣ p ↦ M `in K)
 
     ↓-return        : {X : VType}
                       {o : O}
@@ -159,6 +185,19 @@ mutual
                                                (proj₂ (proj₂ (proj₂ (proj₂ (lkpᵢ-↓ₑ-neq {o = o} {i = i} p q)))))
                                                M)
                                        (↓ op (V-rename ren-wk V) N)
+
+    ↓-spawn         : {X : VType}
+                      {C : CType}
+                      {o : O}
+                      {i : I}
+                      {op : Σₛ} →
+                      (V : Γ ⊢V⦂ proj₁ (payload op)) →
+                      (M : Γ ■ ⊢C⦂ C) →
+                      (N : Γ ⊢C⦂ X ! (o , i)) →
+                      --------------------------------
+                      ↓ op V (spawn M N)
+                      ↝↝
+                      spawn M (↓ op V N)
 
     await-promise   : {X : VType}
                       {C : CType} → 
@@ -230,6 +269,15 @@ mutual
                       ↝↝
                       promise op ∣ r ↦ M `in N'
 
+    context-spawn   : {C D : CType}
+                      {M : Γ ■ ⊢C⦂ C}
+                      {N N' : Γ ⊢C⦂ D} →
+                      N ↝↝ N' →
+                      ------------------
+                      spawn M N
+                      ↝↝
+                      spawn M N'
+
     context-coerce  : {X : VType}
                       {o o' : O}
                       {i i' : I}
@@ -286,6 +334,19 @@ mutual
                                        (coerce (lkpᵢ-next-⊑ₒ q r) (lkpᵢ-next-⊑ᵢ q r) M)
                                        (coerce p q N)
 
+    coerce-spawn   : {X : VType}
+                     {C : CType}
+                     {o o' : O}
+                     {i i' : I}
+                     {p : o ⊑ₒ o'}
+                     {q : i ⊑ᵢ i'} →
+                     (M : Γ ■ ⊢C⦂ C) →
+                     (N : Γ ⊢C⦂ X ! (o , i)) → 
+                     --------------------------------------------------
+                     coerce p q (spawn M N)
+                     ↝↝
+                     spawn M (coerce p q N)
+
 
 -- ONE-TO-ONE CORRESPONDENCE BETWEEN THE TWO SETS OF REDUCTION RULES
 
@@ -304,10 +365,14 @@ mutual
   let-↑ p V M N
 ↝↝-to-↝ (let-promise p M₁ M₂ N) =
   let-promise p M₁ M₂ N
+↝↝-to-↝ (let-spawn M N K) =
+  let-spawn M N K
 ↝↝-to-↝ (letrec-unfold M N) =
   letrec-unfold M N
 ↝↝-to-↝ (promise-↑ p q V M N) =
   promise-↑ p q V M N
+↝↝-to-↝ (promise-spawn p M N K) =
+  promise-spawn p M N K
 ↝↝-to-↝ (↓-return V W) =
   ↓-return V W
 ↝↝-to-↝ (↓-↑ p V W M) =
@@ -316,6 +381,8 @@ mutual
   ↓-promise-op p V M N
 ↝↝-to-↝ (↓-promise-op' p q V M N) =
   ↓-promise-op' p q V M N
+↝↝-to-↝ (↓-spawn V M N) =
+  ↓-spawn V M N
 ↝↝-to-↝ (await-promise V M) =
   await-promise V M
 ↝↝-to-↝ (box-unbox V M) =
@@ -328,6 +395,8 @@ mutual
   context _ (↝↝-to-↝ r)
 ↝↝-to-↝ (context-promise r) =
   context _ (↝↝-to-↝ r)
+↝↝-to-↝ (context-spawn r) =
+  context _ (↝↝-to-↝ r)
 ↝↝-to-↝ (context-coerce r) =
   context _ (↝↝-to-↝ r)
 ↝↝-to-↝ (coerce-return V) =
@@ -336,6 +405,8 @@ mutual
   coerce-↑ p V M
 ↝↝-to-↝ (coerce-promise p M N) =
   coerce-promise p M N
+↝↝-to-↝ (coerce-spawn M N) =
+  coerce-spawn M N
 
 
 mutual
@@ -358,6 +429,8 @@ mutual
     context-↓ (↝-context-to-↝↝ E r)
   ↝-context-to-↝↝ (promise op ∣ p ↦ M `in E) r =
     context-promise (↝-context-to-↝↝ E r)
+  ↝-context-to-↝↝ (spawn M E) r =
+    context-spawn (↝-context-to-↝↝ E r) 
   ↝-context-to-↝↝ (coerce p q E) r =
     context-coerce (↝-context-to-↝↝ E r)
   
@@ -377,10 +450,14 @@ mutual
     let-↑ p V M N
   ↝-to-↝↝ (let-promise p M₁ M₂ N) =
     let-promise p M₁ M₂ N
+  ↝-to-↝↝ (let-spawn M N K) =
+    let-spawn M N K
   ↝-to-↝↝ (letrec-unfold M N) =
     letrec-unfold M N
   ↝-to-↝↝ (promise-↑ p q V M N) =
     promise-↑ p q V M N
+  ↝-to-↝↝ (promise-spawn p M N K) =
+    promise-spawn p M N K
   ↝-to-↝↝ (↓-return V W) =
     ↓-return V W
   ↝-to-↝↝ (↓-↑ p V W M) =
@@ -389,6 +466,8 @@ mutual
     ↓-promise-op p V M N
   ↝-to-↝↝ (↓-promise-op' p q V M N) =
     ↓-promise-op' p q V M N
+  ↝-to-↝↝ (↓-spawn V M N) =
+    ↓-spawn V M N
   ↝-to-↝↝ (await-promise V M) =
     await-promise V M
   ↝-to-↝↝ (box-unbox V M) =
@@ -401,6 +480,8 @@ mutual
     coerce-↑ p V M
   ↝-to-↝↝ (coerce-promise p M N) =
     coerce-promise p M N
+  ↝-to-↝↝ (coerce-spawn M N) =
+    coerce-spawn M N
 
 
 -- FINALITY OF RESULT FORMS
@@ -498,6 +579,17 @@ run-↑-⊥ : {Γ : MCtx}
 run-↑-⊥ (awaiting ())
 
 
+run-spawn-⊥ : {Γ : MCtx}
+              {C D : CType}
+              {M : ⟨⟨ Γ ⟩⟩ ■ ⊢C⦂ C}
+              {N : ⟨⟨ Γ ⟩⟩ ⊢C⦂ D} →
+              RunResult⟨ Γ ∣ spawn M N ⟩ →
+              ----------------------------
+              ⊥
+
+run-spawn-⊥ (awaiting ())
+
+              
 run-let-return-⊥ : {Γ : MCtx}
                    {X Y : VType}
                    {o : O}
@@ -527,6 +619,21 @@ run-let-promise-⊥ : {Γ : MCtx}
 run-let-promise-⊥ (awaiting (let-in ()))
 
 
+run-let-spawn-⊥ : {Γ : MCtx}
+                  {X Y : VType}
+                  {C : CType}
+                  {o : O}
+                  {i : I}
+                  {M : ⟨⟨ Γ ⟩⟩ ■ ⊢C⦂ C}
+                  {N : ⟨⟨ Γ ⟩⟩ ⊢C⦂ (X ! (o , i))}
+                  {K  : (⟨⟨ Γ ⟩⟩ ∷ X) ⊢C⦂ (Y ! (o , i))} →
+                  RunResult⟨ Γ ∣ let= spawn M N `in K ⟩ →
+                  ----------------------------------------------------------
+                  ⊥
+
+run-let-spawn-⊥ (awaiting (let-in ()))
+
+
 run-finality-↝↝ : {Γ : MCtx}
                   {C : CType}
                   {M N : ⟨⟨ Γ ⟩⟩ ⊢C⦂ C} → 
@@ -542,12 +649,16 @@ run-finality-↝↝ R (let-↑ p V M N) =
   run-↑-⊥ (run-invert-let R)
 run-finality-↝↝ R (let-promise p M₁ M₂ N) =
   run-let-promise-⊥ R
+run-finality-↝↝ R (let-spawn M N K) =
+  run-let-spawn-⊥ R
 run-finality-↝↝ (awaiting ()) (letrec-unfold M N)
 run-finality-↝↝ (promise (awaiting ())) (promise-↑ p q V M N)
+run-finality-↝↝ (promise (awaiting ())) (promise-spawn p M N K)
 run-finality-↝↝ (awaiting (interrupt ())) (↓-return V W)
 run-finality-↝↝ (awaiting (interrupt ())) (↓-↑ p V W M)
 run-finality-↝↝ (awaiting (interrupt ())) (↓-promise-op p V M N)
 run-finality-↝↝ (awaiting (interrupt ())) (↓-promise-op' p q V M N)
+run-finality-↝↝ (awaiting (interrupt ())) (↓-spawn V M N)
 run-finality-↝↝ (awaiting ()) (await-promise V M)
 run-finality-↝↝ (awaiting ()) (box-unbox V M)
 run-finality-↝↝ R (context-let r) =
@@ -563,6 +674,7 @@ run-finality-↝↝ R (context-coerce r) =
 run-finality-↝↝ (awaiting (coerce ())) (coerce-return V)
 run-finality-↝↝ (awaiting (coerce ())) (coerce-↑ p V M)
 run-finality-↝↝ (awaiting (coerce ())) (coerce-promise p M N)
+run-finality-↝↝ (awaiting (coerce ())) (coerce-spawn M N)
 
 
 comp-finality-↝↝ : {Γ : MCtx}
@@ -577,6 +689,8 @@ comp-finality-↝↝ (comp R) r =
   run-finality-↝↝ R r
 comp-finality-↝↝ (signal R) (context-↑ r) =
   comp-finality-↝↝ R r
+comp-finality-↝↝ (spawn R) (context-spawn r) =
+  comp-finality-↝↝ R r
 
 
 comp-finality : {Γ : MCtx}
@@ -589,4 +703,5 @@ comp-finality : {Γ : MCtx}
 
 comp-finality R r =
   comp-finality-↝↝ R (↝-to-↝↝ r)
+
 
