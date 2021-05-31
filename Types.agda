@@ -21,6 +21,7 @@ mutual
 
   data VType : Set where
     ``  : BType → VType
+    𝟙   : VType
     _⇒_ : VType → CType → VType
     ⟨_⟩ : VType → VType
     □   : VType → VType
@@ -36,6 +37,7 @@ infix 30 _!_
 
 mobile : VType → Set
 mobile (`` A) = ⊤
+mobile 𝟙 = ⊤
 mobile (X ⇒ C) = ⊥
 mobile ⟨ X ⟩ = ⊥
 mobile (□ X) = ⊤

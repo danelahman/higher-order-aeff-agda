@@ -71,16 +71,16 @@ _[_]s : {Γ Γ' : Ctx} {X : VType} →
 s [ V ]s = ⟨ s , V ⟩
 
 
--- LIFTING SUBSTITUTIONS
+-- CONGRUENCE OF SUBSTITUTIONS
 
-lift : {Γ Γ' : Ctx} {X : VType} → Sub Γ Γ' → Sub (Γ ∷ X) (Γ' ∷ X)
-lift ⟨ s , x ⟩ =
+subst-cong : {Γ Γ' : Ctx} {X : VType} → Sub Γ Γ' → Sub (Γ ∷ X) (Γ' ∷ X)
+subst-cong ⟨ s , x ⟩ =
   ⟨ π ⟨ s , x ⟩ , ` Hd ⟩
-lift ε =
+subst-cong ε =
   ⟨ ε , ` Hd ⟩
-lift (π s) =
+subst-cong (π s) =
   ⟨ π (π s) , ` Hd ⟩
-lift (φ s) =
+subst-cong (φ s) =
   ⟨ π (φ s) , ` Hd ⟩
 
 
@@ -148,8 +148,10 @@ mutual
     sub-var x s
   (´ c) [ s ]v =
     ´ c
+  ⋆ [ s ]v =
+    ⋆
   (ƛ M) [ s ]v =
-    ƛ (M [ lift s ]c)
+    ƛ (M [ subst-cong s ]c)
   ⟨ V ⟩ [ s ]v =
     ⟨ V [ s ]v ⟩
   (□ V) [ s ]v =
@@ -165,9 +167,9 @@ mutual
   (return V) [ s ]c =
     return (V [ s ]v)
   (let= M `in N) [ s ]c =
-    let= (M [ s ]c) `in (N [ lift s ]c)
+    let= (M [ s ]c) `in (N [ subst-cong s ]c)
   (letrec M `in N) [ s ]c =
-    letrec M [ lift (lift s) ]c `in (N [ lift s ]c)
+    letrec M [ subst-cong (subst-cong s) ]c `in (N [ subst-cong s ]c)
   (V · W) [ s ]c =
     (V [ s ]v) · (W [ s ]v)
   (↑ op p V M) [ s ]c =
@@ -175,11 +177,11 @@ mutual
   (↓ op V M) [ s ]c =
     ↓ op (V [ s ]v) (M [ s ]c)
   (promise op ∣ p ↦ M `in N) [ s ]c =
-    promise op ∣ p ↦ (M [ lift s ]c) `in (N [ lift s ]c)
+    promise op ∣ p ↦ (M [ subst-cong (subst-cong s) ]c) `in (N [ subst-cong s ]c)
   (await V until M) [ s ]c =
-    await (V [ s ]v) until (M [ lift s ]c)
+    await (V [ s ]v) until (M [ subst-cong s ]c)
   (unbox V `in M) [ s ]c =
-    unbox (V [ s ]v) `in (M [ lift s ]c)
+    unbox (V [ s ]v) `in (M [ subst-cong s ]c)
   (spawn M N) [ s ]c =
     spawn (M [ φ s ]c) (N [ s ]c)
   (coerce p q M) [ s ]c =
