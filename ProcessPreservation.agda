@@ -47,6 +47,13 @@ data _⇝_ : {o o' : O} → PType o → PType o' → Set where
         ----------------------
         (PP ∥ QQ) ⇝ (PP' ∥ QQ')
 
+  spawn : {X Y : VType}
+          {o o' : O}
+          {i i' : I} →
+          -------------------------------------------
+          (Y ‼ o' , i') ⇝ (X ‼ o , i) ∥ (Y ‼ o' , i')
+          
+
 
 -- REDUCTION OF PROCESS TYPES IS REFLEXIVE
 
@@ -87,6 +94,8 @@ data _⇝_ : {o o' : O} → PType o → PType o' → Set where
   act {o = o} {i = i} (op ∷ₗ ops) op' (cong (λ oi → op ↓ₑ oi) p) (cong (λ oi → op ↓ₑ oi) q) 
 ⇝-↓ₚ-cong (par p q) =
   par (⇝-↓ₚ-cong p) (⇝-↓ₚ-cong q)
+⇝-↓ₚ-cong spawn =
+  spawn
 
 
 -- PROCESS TYPE REDUCTION INCREASES SIGNAL INDEX
@@ -114,6 +123,8 @@ inj-proj₁ refl = refl
                       (↓↓ₑ-⊑ₒ-act ops op)))
 ⇝-⊑ₒ (par p q) =
   ∪ₒ-fun (⇝-⊑ₒ p) (⇝-⊑ₒ q)
+⇝-⊑ₒ (spawn) =
+  ∪ₒ-inr
 
 
 -- EVALUATION CONTEXTS FOR PROCESSES
@@ -417,10 +428,22 @@ data _[_]↝_ {Γ : Ctx} : {o o' : O} {PP : PType o} {QQ : PType o'} → Γ ⊢P
             (p : op ∈ₒ o) →
             (V : Γ ⊢V⦂ proj₁ (payload op)) →
             (M : Γ ⊢C⦂ X ! (o , i)) →
-            -----------------------------
+            --------------------------------
             run (↑ op p V M)
             [ id ]↝
             ↑ op p V (run M)
+
+  -- PROCESS SPAWNING RULE
+
+  spawn   : {X Y : VType}
+            {o o' : O}
+            {i i' : I} →
+            (M : Γ ■ ⊢C⦂ X ! (o , i)) →
+            (N : Γ ⊢C⦂ Y ! (o' , i')) →
+            ---------------------------
+            run (spawn M N)
+            [ spawn ]↝
+            run (■-str-c {Γ' = []} M) ∥ run N
 
   -- EVALUATION CONTEXT RULE
 

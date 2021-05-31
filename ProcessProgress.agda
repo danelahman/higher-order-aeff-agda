@@ -80,6 +80,8 @@ proc-progress (run {X} {o} {i} M) with progress M
   inj₂ (proc (run R))
 ... | inj₂ (signal {_} {_} {_} {_} {p} {V} {Q} R) =
   inj₁ (_ , _ , _ , _ , ↑ p V Q)
+... | inj₂ (spawn {Y ! (o' , i')} {_} {M'} {M''} R) =
+  inj₁ (_ , _ , _ , _ , spawn M' M'')
 proc-progress (P ∥ Q) with proc-progress P
 ... | inj₁ (o' , PP' , r , P' , r') =
   inj₁ (_ , _ , _ , _ , context ([-] ∥ₗ Q) r')
