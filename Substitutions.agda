@@ -180,6 +180,8 @@ mutual
     await (V [ s ]v) until (M [ lift s ]c)
   (unbox V `in M) [ s ]c =
     unbox (V [ s ]v) `in (M [ lift s ]c)
+  (spawn M N) [ s ]c =
+    spawn (M [ φ s ]c) (N [ s ]c)
   (coerce p q M) [ s ]c =
     coerce p q (M [ s ]c)
 

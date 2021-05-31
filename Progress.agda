@@ -81,6 +81,13 @@ data CompResult⟨_∣_⟩ (Γ : MCtx) : {C : CType} → ⟨⟨ Γ ⟩⟩ ⊢C�
            --------------------------------
            CompResult⟨ Γ ∣ ↑ op p V M ⟩
 
+  spawn  : {C D : CType}
+           {M : ⟨⟨ Γ ⟩⟩ ■ ⊢C⦂ C}
+           {N : ⟨⟨ Γ ⟩⟩ ⊢C⦂ D} →
+           CompResult⟨ Γ ∣ N ⟩ →
+           -----------------------------
+           CompResult⟨ Γ ∣ spawn M N ⟩
+
 
 -- PROGRESS THEOREM FOR PROMISE-OPEN COMPUTATIONS
 
@@ -114,6 +121,8 @@ progress (let= M `in N) with progress M
   inj₂ (comp (awaiting (let-in R)))
 ... | inj₂ (signal {_} {_} {_} {_} {p} {V} {M'} R) =
   inj₁ (_ , let-↑ p V M' N)
+... | inj₂ (spawn {_} {_} {M'} {M''} R) =
+  inj₁ (_ , let-spawn M' M'' N)
 progress (letrec M `in N) =
   inj₁ (_ , letrec-unfold M N)
 progress ((` x) · W) with ⇒-not-in-mctx x
@@ -134,6 +143,8 @@ progress (↓ op V M) with progress M
   inj₂ (comp (awaiting (interrupt R)))
 ... | inj₂ (signal {X} {o} {i} {op'} {p} {W} {M'} R) =
   inj₁ (_ , (↓-↑ p V W M'))
+... | inj₂ (spawn {_} {_} {M'} {M''} R) =
+  inj₁ (_ , ↓-spawn V M' M'')
 ... | inj₂ (comp (promise {_} {_} {_} {_} {_} {_} {op'} {p} {M'} {M''} R)) with decₛ op op'
 ... | yes refl =
   inj₁ (_ , ↓-promise-op p V M' M'')
@@ -146,6 +157,8 @@ progress (promise op ∣ p ↦ M `in N) with progress N
   inj₂ (comp (promise R))
 ... | inj₂ (signal {_} {_} {_} {_} {q} {V} {M'} R) =
   inj₁ (_ , promise-↑ p q V M M')
+... | inj₂ (spawn {_} {_} {M'} {M''} R) =
+  inj₁ (_ , promise-spawn p M M' M'')
 progress (await ` x until M) =
   inj₂ (comp (awaiting await))
 progress (await ⟨ V ⟩ until M) =
@@ -154,6 +167,15 @@ progress (unbox ` x `in M) with □-not-in-mctx x
 ... | ()
 progress (unbox (□ V) `in M) =
   inj₁ (M [ ⟨ sub-of-ren ren-id ,, ■-str-v {Γ' = []} V ⟩ ]c , box-unbox V M)
+progress (spawn M N) with progress N 
+... | inj₁ (N' , r) =
+  inj₁ (_ , context (spawn M [-]) r)
+... | inj₂ (comp R) =
+  inj₂ (spawn (comp R))
+... | inj₂ (signal R) =
+  inj₂ (spawn (signal R))
+... | inj₂ (spawn R) =
+  inj₂ (spawn (spawn R))
 progress (coerce p q M) with progress M
 ... | inj₁ (M' , r) =
   inj₁ (_ , context (coerce p q [-]) r)
@@ -165,6 +187,8 @@ progress (coerce p q M) with progress M
   inj₂ (comp (awaiting (coerce R)))
 ... | inj₂ (signal {_} {_} {_} {_} {r} {V} {M'} R) =
   inj₁ (_ , coerce-↑ r V M')
+... | inj₂ (spawn {_} {_} {M'} {M''} R) =
+  inj₁ (_ , coerce-spawn M' M'')
 
 
 -- PROGRESS THEOREM FOR CLOSED COMPUTATIONS

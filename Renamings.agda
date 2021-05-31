@@ -164,6 +164,8 @@ mutual
     await (V-rename f V) until (C-rename (ren-cong f) M)
   C-rename f (unbox V `in M) =
     unbox (V-rename f V) `in (C-rename (ren-cong f) M)
+  C-rename f (spawn M N) =
+    spawn (C-rename (φ f) M) (C-rename f N)
   C-rename f (coerce p q M) =
     coerce p q (C-rename f M)
 

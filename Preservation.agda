@@ -68,6 +68,13 @@ data _⊢E[_]⦂_ (Γ : Ctx) : (Δ : BCtx) → CType → Set where
                      ----------------------------------------------
                      Γ ⊢E[ X ∷ₗ Δ ]⦂ Y ! (o , i)
 
+  spawn            : {Δ : BCtx}
+                     {C D : CType} →
+                     Γ ■ ⊢C⦂ C →
+                     Γ ⊢E[ Δ ]⦂ D →
+                     ---------------
+                     Γ ⊢E[ Δ ]⦂ D
+
   coerce           : {Δ : BCtx}
                      {X : VType}
                      {o o' : O}
@@ -101,13 +108,13 @@ hole-ty-e (↓ op V E) =
   hole-ty-e E
 hole-ty-e (promise op ∣ p ↦ M `in E) =
   hole-ty-e E
+hole-ty-e (spawn M E) =
+  hole-ty-e E
 hole-ty-e (coerce p q E) =
   hole-ty-e E
 
 
 -- FILLING A WELL-TYPED EVALUATION CONTEXT
-
-{- LEMMA 3.5 -}
 
 infix 30 _[_]
 
@@ -116,13 +123,15 @@ _[_] : {Γ : Ctx} {Δ : BCtx} {C : CType} → (E : Γ ⊢E[ Δ ]⦂ C) → Γ �
   M
 (let= E `in N) [ M ] =
   let= (E [ M ]) `in N
-↑ op p V E [ M ] =
+(↑ op p V E) [ M ] =
   ↑ op p V (E [ M ])
-↓ op V E [ M ] =
+(↓ op V E) [ M ] =
   ↓ op V (E [ M ])
 (promise op ∣ p ↦ N `in E) [ M ] =
   promise op ∣ p ↦ N `in (E [ M ])
-coerce p q E [ M ] =
+(spawn N E) [ M ] =
+  spawn N (E [ M ])
+(coerce p q E) [ M ] =
   coerce p q (E [ M ])
 
 
@@ -169,7 +178,7 @@ mutual
   strengthen-■-v {Γ} {Γ'} {Δ} ⟨ V ⟩ =
     ⟨ strengthen-■-v {Γ} {Γ'} {Δ} V ⟩
   strengthen-■-v {Γ} {Γ'} {Δ} (□ V) =
-    □ (strengthen-■-v {Γ} {Γ' ■} {Δ} V)
+    □ (strengthen-■-v {Γ' = _ ■} {Δ = Δ} V)
 
 
   strengthen-■-c : {Γ Γ' : Ctx} {Δ : BCtx} {C : CType} →
@@ -195,6 +204,8 @@ mutual
     await (strengthen-■-v {Γ} {Γ'} {Δ} V) until (strengthen-■-c {Γ} {Γ' ∷ _} {Δ} N)
   strengthen-■-c {Γ} {Γ'} {Δ} (unbox V `in N) =
     unbox (strengthen-■-v {Γ} {Γ'} {Δ} V) `in (strengthen-■-c {Γ} {Γ' ∷ _} {Δ} N)
+  strengthen-■-c {Γ} {Γ'} {Δ} (spawn M N) =
+    spawn (strengthen-■-c {Γ' = _ ■} {Δ = Δ} M) (strengthen-■-c {Δ = Δ} N)
   strengthen-■-c {Γ} {Γ'} {Δ} (coerce p q M) =
     coerce p q (strengthen-■-c {Γ} {Γ'} {Δ} M)
 
@@ -267,6 +278,18 @@ data _↝_ {Γ : Ctx} : {C : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ C → Set wh
                     ↝
                     (promise op ∣ p ↦ M₁ `in (let= M₂ `in (C-rename (ren-cong ren-wk) N)))
 
+  let-spawn       : {X Y : VType}
+                    {C : CType}
+                    {o : O}
+                    {i : I} → 
+                    (M : Γ ■ ⊢C⦂ C) → 
+                    (N : Γ ⊢C⦂ X ! (o , i)) →
+                    (K : Γ ∷ X ⊢C⦂ Y ! (o , i)) →
+                    ---------------------------------------
+                    let= (spawn M N) `in K
+                    ↝
+                    spawn M (let= N `in K)
+
   letrec-unfold   : {X : VType}
                     {C D : CType}
                     (M : Γ ∷ (X ⇒ C) ∷ X ⊢C⦂ C) →
@@ -289,6 +312,21 @@ data _↝_ {Γ : Ctx} : {C : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ C → Set wh
                     (promise op ∣ p ↦ M `in (↑ op' q V N))
                     ↝
                     ↑ op' q (strengthen-val {Δ = X ∷ₗ []} (proj₂ (payload op')) V) (promise op ∣ p ↦ M `in N)
+
+  promise-spawn   : {X Y : VType}
+                    {C : CType}
+                    {o o' : O}
+                    {i i' : I}
+                    {op : Σₛ} →
+                    (p : lkpᵢ op i ≡ just (o' , i')) →
+                    (M : Γ ∷ proj₁ (payload op) ⊢C⦂ ⟨ X ⟩ ! (o' , i')) →
+                    (N : Γ ∷ ⟨ X ⟩ ■ ⊢C⦂ C) → 
+                    (K : Γ ∷ ⟨ X ⟩ ⊢C⦂ Y ! (o , i)) →
+                    ---------------------------------------------------------------------------
+                    (promise op ∣ p ↦ M `in (spawn N K))
+                    ↝
+                    spawn (strengthen-■-c {Γ' = []} {Δ = X ∷ₗ []} N) (promise op ∣ p ↦ M `in K)
+
 
   ↓-return        : {X : VType}
                     {o : O}
@@ -348,6 +386,19 @@ data _↝_ {Γ : Ctx} : {C : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ C → Set wh
                                              (proj₂ (proj₂ (proj₂ (proj₂ (lkpᵢ-↓ₑ-neq {o = o} {i = i} p q)))))
                                              M)
                                      (↓ op (V-rename ren-wk V) N)
+
+  ↓-spawn         : {X : VType}
+                    {C : CType}
+                    {o : O}
+                    {i : I}
+                    {op : Σₛ} →
+                    (V : Γ ⊢V⦂ proj₁ (payload op)) →
+                    (M : Γ ■ ⊢C⦂ C) →
+                    (N : Γ ⊢C⦂ X ! (o , i)) →
+                    --------------------------------
+                    ↓ op V (spawn M N)
+                    ↝
+                    spawn M (↓ op V N)
 
   await-promise   : {X : VType}
                     {C : CType} → 
@@ -421,5 +472,18 @@ data _↝_ {Γ : Ctx} : {C : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ C → Set wh
                                      (lkpᵢ-next-eq q r)
                                      (coerce (lkpᵢ-next-⊑ₒ q r) (lkpᵢ-next-⊑ᵢ q r) M)
                                      (coerce p q N)
+
+  coerce-spawn   : {X : VType}
+                   {C : CType}
+                   {o o' : O}
+                   {i i' : I}
+                   {p : o ⊑ₒ o'}
+                   {q : i ⊑ᵢ i'} →
+                   (M : Γ ■ ⊢C⦂ C) →
+                   (N : Γ ⊢C⦂ X ! (o , i)) → 
+                   --------------------------------------------------
+                   coerce p q (spawn M N)
+                   ↝
+                   spawn M (coerce p q N)
 
 

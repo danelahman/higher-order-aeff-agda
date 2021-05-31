@@ -154,6 +154,12 @@ mutual
                        -------------
                        Γ ⊢C⦂ C
 
+    spawn            : {C D : CType} →
+                       Γ ■ ⊢C⦂ C →
+                       Γ ⊢C⦂ D →
+                       ---------------------
+                       Γ ⊢C⦂ D
+
     coerce           : {X : VType}
                        {o o' : O}
                        {i i' : I} →
@@ -163,6 +169,7 @@ mutual
                        -------------------
                        Γ ⊢C⦂ X ! (o' , i')
                         
+
 
 -- DERIVATIONS OF WELL-TYPED PROCESSES
 
@@ -262,6 +269,8 @@ mutual
     await (■-dup-v V) until (■-dup-c M)
   ■-dup-c (unbox V `in M) =
     unbox (■-dup-v V) `in (■-dup-c M)
+  ■-dup-c (spawn M N) =
+    spawn (■-dup-c {Γ' = _ ■} M) (■-dup-c N)
   ■-dup-c (coerce p q M) =
     coerce p q (■-dup-c M)
   
@@ -311,7 +320,7 @@ mutual
   ■-str-v ⟨ V ⟩ =
     ⟨ ■-str-v V ⟩
   ■-str-v {Γ} {Γ'} (□ V) =
-    □ (■-str-v {Γ} {Γ' ■} V)
+    □ (■-str-v {Γ' = _ ■} V)
 
 
   ■-str-c : {Γ Γ' : Ctx} {C : CType} →
@@ -337,5 +346,8 @@ mutual
     await (■-str-v V) until (■-str-c M)
   ■-str-c (unbox V `in M) =
     unbox (■-str-v V) `in (■-str-c M)
+  ■-str-c (spawn M N) =
+    spawn (■-str-c {Γ' = _ ■} M) (■-str-c N)
   ■-str-c (coerce p q M) =
     coerce p q (■-str-c M)
+
