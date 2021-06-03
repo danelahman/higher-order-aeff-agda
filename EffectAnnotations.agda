@@ -189,17 +189,29 @@ data _⊑ᵢ_ (i i' : I) : Set where
         i ⊑ᵢ i'
 
 
--- PRODUCT ORDER
+-- PRODUCT ORDER SUBTYPING RELATION
 
 _⊑_ : O × I → Maybe (O × I) → Set
-x ⊑ nothing = ⊥
+x       ⊑ nothing        = ⊥
 (o , i) ⊑ just (o' , i') = (o ⊑ₒ o') × (i ⊑ᵢ i')
 
-⊑-just : {o : O} {i : I} {oi : Maybe (O × I)} → (o , i) ⊑ oi → Σ[ o' ∈ O ] Σ[ i' ∈ I ] (oi ≡ just (o' , i'))
+
+⊑-just : {o : O} {i : I} {oi : Maybe (O × I)} →
+         (o , i) ⊑ oi →
+         ---------------------------------------------
+         Σ[ o' ∈ O ] Σ[ i' ∈ I ] (oi ≡ just (o' , i'))
+         
 ⊑-just {oi = just (o' , i')} p = o' , i' , refl
 
-⊑-proj : {o o' : O} {i i' : I} {oi : Maybe (O × I)} → (o , i) ⊑ oi → oi ≡ just (o' , i') → o ⊑ₒ o' × i ⊑ᵢ i'
+
+⊑-proj : {o o' : O} {i i' : I} {oi : Maybe (O × I)} →
+         (o , i) ⊑ oi →
+         oi ≡ just (o' , i') →
+         --------------------------------------------
+         o ⊑ₒ o' × i ⊑ᵢ i'
+         
 ⊑-proj {oi = just (o'' , i'')} p refl = p
+
 
 -- SUBTYPING RELATIONS ARE PREORDERS
 
@@ -264,11 +276,13 @@ x ⊑ nothing = ⊥
     ⊑ᵢ-trans-aux o j op (o' , j' , r' , s , t) =
       ⊑ᵢ-trans-aux' o j op o' j' r' s t (q op r')
 
+
 ⊑-refl : {o : O} {i : I} →
          ----------------------
          (o , i) ⊑ just (o , i)
 
 ⊑-refl = (⊑ₒ-refl , ⊑ᵢ-refl)
+
 
 ⊑-trans : {oi : O × I} {oi' : Maybe (O × I)} {oi'' : O × I} {oi''' : Maybe (O × I)} →
           oi ⊑ oi' →
@@ -277,7 +291,9 @@ x ⊑ nothing = ⊥
           ------------------------------
           oi ⊑ oi'''
 
-⊑-trans {oi = (o , i)} {oi'' = (o'' , i'')} {oi''' = just (o''' , i''')} (pₒ , pᵢ) refl (rₒ , rᵢ) = ( ⊑ₒ-trans pₒ rₒ , ⊑ᵢ-trans pᵢ rᵢ)
+⊑-trans {(o , i)} {_} {(o'' , i'')} {just (o''' , i''')} (pₒ , pᵢ) refl (rₒ , rᵢ) =
+  (⊑ₒ-trans pₒ rₒ , ⊑ᵢ-trans pᵢ rᵢ)
+
 
 -- SUBTYPING RELATIONS ARE PROOF-IRRELEVANT
 

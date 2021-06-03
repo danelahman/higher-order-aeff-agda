@@ -483,7 +483,7 @@ data _↝_ {Γ : Ctx} : {C : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ C → Set wh
                    {q : i ⊑ᵢ i'} →
                    (M : Γ ■ ⊢C⦂ C) →
                    (N : Γ ⊢C⦂ X ! (o , i)) → 
-                   --------------------------------------------------
+                   -------------------------
                    coerce p q (spawn M N)
                    ↝
                    spawn M (coerce p q N)
