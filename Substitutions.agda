@@ -176,8 +176,8 @@ mutual
     ↑ op p (V [ s ]v) (M [ s ]c)
   (↓ op V M) [ s ]c =
     ↓ op (V [ s ]v) (M [ s ]c)
-  (promise op ∣ p / q / r ↦ M `in N) [ s ]c =
-    promise op ∣ p / q / r ↦ (M [ subst-cong (subst-cong s) ]c) `in (N [ subst-cong s ]c)
+  (promise op ∣ p ↦ M `in N) [ s ]c =
+    promise op ∣ p ↦ (M [ subst-cong (subst-cong s) ]c) `in (N [ subst-cong s ]c)
   (await V until M) [ s ]c =
     await (V [ s ]v) until (M [ subst-cong s ]c)
   (unbox V `in M) [ s ]c =

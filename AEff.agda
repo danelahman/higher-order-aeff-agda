@@ -132,14 +132,12 @@ mutual
                        --------------------------
                        Γ ⊢C⦂ X ! op ↓ₑ (o , i)
 
-    promise_∣_/_/_↦_`in_ : {X Y : VType}
-                       {o o' o'' : O}
-                       {i i' i'' : I} → 
+    promise_∣_↦_`in_ : {X Y : VType}
+                       {o o' : O}
+                       {i i' : I} → 
                        (op : Σₛ) →
-                       lkpᵢ op i ≡ just (o' , i') →
-                       o'' ⊑ₒ o' →
-                       i'' ⊑ᵢ i' → 
-                       Γ ∷ proj₁ (payload op) ∷ (𝟙 ⇒ (⟨ X ⟩ ! (∅ₒ , ∅ᵢ [ op ↦ just (o'' , i'') ]ᵢ))) ⊢C⦂ ⟨ X ⟩ ! (o'' , i'') →
+                       (o' , i') ⊑ lkpᵢ op i  →
+                       Γ ∷ proj₁ (payload op) ∷ (𝟙 ⇒ (⟨ X ⟩ ! (∅ₒ , ∅ᵢ [ op ↦ just (o' , i') ]ᵢ))) ⊢C⦂ ⟨ X ⟩ ! (o' , i') →
                        Γ ∷ ⟨ X ⟩ ⊢C⦂ Y ! (o , i) →
                        ---------------------------------------------------------------------------------------------------
                        Γ ⊢C⦂ Y ! (o , i)
@@ -269,8 +267,8 @@ mutual
     ↑ op p (■-dup-v V) (■-dup-c M)
   ■-dup-c (↓ op V M) =
     ↓ op (■-dup-v V) (■-dup-c M)
-  ■-dup-c (promise op ∣ p / q / x ↦ M `in N) =
-    promise op ∣ p / q / x ↦ (■-dup-c M) `in (■-dup-c N)
+  ■-dup-c (promise op ∣ x ↦ M `in N) =
+    promise op ∣ x ↦ (■-dup-c M) `in (■-dup-c N)
   ■-dup-c (await V until M) =
     await (■-dup-v V) until (■-dup-c M)
   ■-dup-c (unbox V `in M) =
@@ -350,8 +348,8 @@ mutual
     ↑ op p (■-str-v V) (■-str-c M)
   ■-str-c (↓ op V M) =
     ↓ op (■-str-v V) (■-str-c M)
-  ■-str-c (promise op ∣ p / q / r ↦ M `in N) =
-    promise op ∣ p / q / r ↦ (■-str-c M) `in (■-str-c N)
+  ■-str-c (promise op ∣ r ↦ M `in N) =
+    promise op ∣ r ↦ (■-str-c M) `in (■-str-c N)
   ■-str-c (await V until M) =
     await (■-str-v V) until (■-str-c M)
   ■-str-c (unbox V `in M) =
