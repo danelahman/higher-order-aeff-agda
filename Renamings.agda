@@ -160,8 +160,8 @@ mutual
     ↑ op p (V-rename f V) (C-rename f M)
   C-rename f (↓ op V M) =
     ↓ op (V-rename f V) (C-rename f M)
-  C-rename f (promise op ∣ p ↦ M `in N) =
-    promise op ∣ p ↦ C-rename (ren-cong (ren-cong f)) M `in C-rename (ren-cong f) N
+  C-rename f (promise op ∣ p / q / r ↦ M `in N) =
+    promise op ∣ p / q / r ↦ C-rename (ren-cong (ren-cong f)) M `in C-rename (ren-cong f) N
   C-rename f (await V until M) =
     await (V-rename f V) until (C-rename (ren-cong f) M)
   C-rename f (unbox V `in M) =
