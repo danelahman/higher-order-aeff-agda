@@ -726,12 +726,6 @@ lkpᵢ-next-⊑ᵢ : {o'' : O} {i i' i'' : I} {op : Σₛ} →
 lkpᵢ-next-⊑ᵢ {o''} {i} {i'} {i''} {op} (rel p) q =
   proj₂ (proj₂ (proj₂ (proj₂ (p op q))))
 
-lkpᵢ-next-⊑ᵢ : {o'' : O} {i i' i'' : I} {op : Σₛ} →
-              (p : i ⊑ᵢ i') →
-              (q : lkpᵢ op i ≡ just (o'' , i'')) →
-              -----------------------------------
-              i'' ⊑ᵢ lkpᵢ-nextᵢ p q
-
 
 -- ACTION OF INTERRUPTS ON EFFECT ANNOTATIONS IS MONOTONIC
 
