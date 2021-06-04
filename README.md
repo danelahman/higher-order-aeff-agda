@@ -14,24 +14,26 @@
 
 - The unicode symbols used in the source code have tested to display correctly with the DejaVu Sans Mono font.
 
-- `EffectAnnotations.agda` - effect annotations for signals and interrupt handlers
+- The formalisation has the following structure:
 
-- `Types.agda` - value, computation, and process types
+  - `EffectAnnotations.agda` - effect annotations for signals and interrupt handlers
 
-- `AEff.agda` - well-typed values, computations, and processes (we do not consider untyped terms)
+  - `Types.agda` - value, computation, and process types
 
-- `Renamings.agda` - renamings for values, computations, and processes
+  - `AEff.agda` - well-typed values, computations, and processes (we do not consider untyped terms)
 
-- `Substitutions.agda` - substitutions for values, computations, and processes
+  - `Renamings.agda` - renamings for values, computations, and processes
 
-- `Preservation.agda` - small-step operational semantics for computations (also serves as a preservation proof)
+  - `Substitutions.agda` - substitutions for values, computations, and processes
 
-- `Progress.agda` - proof of progress for the small-step operational semantics of computations
+  - `Preservation.agda` - small-step operational semantics for computations (also serves as a preservation proof)
 
-- `ProcessPreservation.agda` - small-step operational semantics for processes (also serves as a preservation proof)
+  - `Progress.agda` - proof of progress for the small-step operational semantics of computations
 
-- `ProcessProgress.agda` - proof of progress for the small-step operational semantics of processes
+  - `ProcessPreservation.agda` - small-step operational semantics for processes (also serves as a preservation proof)
 
-- `Finality.agda` - proof that the result forms of computations are final, i.e., they do not reduce further
+  - `ProcessProgress.agda` - proof of progress for the small-step operational semantics of processes
 
-- `ProcessFinality.agda` - proof that the result forms of processes are final, i.e., they do not reduce further
+  - `Finality.agda` - proof that the result forms of computations are final, i.e., they do not reduce further
+
+  - `ProcessFinality.agda` - proof that the result forms of processes are final, i.e., they do not reduce further
