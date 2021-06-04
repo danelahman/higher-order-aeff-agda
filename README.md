@@ -1,8 +1,16 @@
-# Agda formalisation of the Modal† AEff language
+# Agda formalisation of the AEff language for higher-order asynchronous effects
 
-_†Modal types are used to generalise the original calculus's signal/interrupt payload types (to allow effectful functions etc)._
+- The core language formalised here differs from the [original language](https://github.com/danelahman/aeff-agda) as follows:
 
-- The formalisation has been tested with Agda version 2.6.1 and standard library version 1.3.
+  - interrupt handlers are now able to reinstall themselves (without resorting to general let-rec);
+
+  - payloads of signals/interrupts have been generalised to allow higher-order values (by the means of modal types);
+
+  - computations can spawn new processes (by the means of modal types); and 
+
+  - operational semantics and metatheory has been simplified (by treating `await` (more) like an algebraic operation).
+
+- The formalisation has been tested with Agda version 2.6.1 and standard library version 1.5.
 
 - The unicode symbols used in the source code have tested to display correctly with the DejaVu Sans Mono font.
 
@@ -17,8 +25,6 @@ _†Modal types are used to generalise the original calculus's signal/interrupt 
 - `Substitutions.agda` - substitutions for values, computations, and processes
 
 - `Preservation.agda` - small-step operational semantics for computations (also serves as a preservation proof)
-
-- `AwaitingComputations.agda` - characterisation of computations that are temporarily blocked awaiting a promise
 
 - `Progress.agda` - proof of progress for the small-step operational semantics of computations
 
