@@ -168,8 +168,6 @@ mutual
     return (V [ s ]v)
   (let= M `in N) [ s ]c =
     let= (M [ s ]c) `in (N [ subst-cong s ]c)
-  (letrec M `in N) [ s ]c =
-    letrec M [ subst-cong (subst-cong s) ]c `in (N [ subst-cong s ]c)
   (V · W) [ s ]c =
     (V [ s ]v) · (W [ s ]v)
   (↑ op p V M) [ s ]c =

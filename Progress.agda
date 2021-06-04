@@ -123,8 +123,6 @@ progress (let= M `in N) with progress M
   inj₁ (_ , let-↑ p V M' N)
 ... | inj₂ (spawn {M = M'} {N = M''} R) =
   inj₁ (_ , let-spawn M' M'' N)
-progress (letrec M `in N) =
-  inj₁ (_ , letrec-unfold M N)
 progress ((` x) · W) with ⇒-not-in-mctx x
 ... | ()
 progress (ƛ M · W) =

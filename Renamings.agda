@@ -152,8 +152,6 @@ mutual
     return (V-rename f V)
   C-rename f (let= M `in N) =
     let= C-rename f M `in C-rename (ren-cong f) N
-  C-rename f (letrec M `in N) =
-    letrec C-rename (ren-cong (ren-cong f)) M `in C-rename (ren-cong f) N
   C-rename f (V · W) =
     V-rename f V · V-rename f W
   C-rename f (↑ op p V M) =

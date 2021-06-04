@@ -193,8 +193,6 @@ mutual
     return (strengthen-■-v {Γ} {Γ'} {Δ} V)
   strengthen-■-c {Γ} {Γ'} {Δ} (let= M `in N) =
     let= (strengthen-■-c {Γ} {Γ'} {Δ} M) `in (strengthen-■-c {Γ} {Γ' ∷ _} {Δ} N)
-  strengthen-■-c {Γ} {Γ'} {Δ} (letrec M `in N) =
-    letrec (strengthen-■-c {Γ} {Γ' ∷ (_ ⇒ _) ∷ _} {Δ} M) `in (strengthen-■-c {Γ} {Γ' ∷ (_ ⇒ _)} {Δ} N)
   strengthen-■-c {Γ} {Γ'} {Δ} (V · W) =
     (strengthen-■-v {Γ} {Γ'} {Δ} V) · (strengthen-■-v {Γ} {Γ'} {Δ} W)
   strengthen-■-c {Γ} {Γ'} {Δ} (↑ op p V M) =
@@ -305,15 +303,6 @@ data _↝_ {Γ : Ctx} : {C : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ C → Set wh
                     let= (spawn M N) `in K
                     ↝
                     spawn M (let= N `in K)
-
-  letrec-unfold   : {X : VType}
-                    {C D : CType}
-                    (M : Γ ∷ (X ⇒ C) ∷ X ⊢C⦂ C) →
-                    (N : Γ ∷ (X ⇒ C) ⊢C⦂ D) →
-                    -------------------------------------------------------------------------------------------------
-                    (letrec M `in N)
-                    ↝
-                    N [ sub-id [ ƛ (letrec (C-rename (ren-cong (ren-cong ren-wk)) M) `in (C-rename ren-exch M)) ]s ]c
 
   promise-↑       : {X Y : VType}
                     {o o' : O}

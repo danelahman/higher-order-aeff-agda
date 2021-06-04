@@ -100,15 +100,6 @@ mutual
                       ↝↝
                       spawn M (let= N `in K)
 
-    letrec-unfold   : {X : VType}
-                      {C D : CType}
-                      (M : Γ ∷ (X ⇒ C) ∷ X ⊢C⦂ C) →
-                      (N : Γ ∷ (X ⇒ C) ⊢C⦂ D) →
-                      ---------------------------------------------------------------------------------------------
-                      (letrec M `in N)
-                      ↝↝
-                      N [ sub-id [ ƛ (letrec C-rename (ren-cong (ren-cong ren-wk)) M `in C-rename ren-exch M) ]s ]c
-
     promise-↑       : {X Y : VType}
                       {o o' : O}
                       {i i' : I}
@@ -401,8 +392,6 @@ mutual
   let-await V M N
 ↝↝-to-↝ (let-spawn M N K) =
   let-spawn M N K
-↝↝-to-↝ (letrec-unfold M N) =
-  letrec-unfold M N
 ↝↝-to-↝ (promise-↑ p q V M N) =
   promise-↑ p q V M N
 ↝↝-to-↝ (promise-spawn p M N K) =
@@ -492,8 +481,6 @@ mutual
     let-await V M N
   ↝-to-↝↝ (let-spawn M N K) =
     let-spawn M N K
-  ↝-to-↝↝ (letrec-unfold M N) =
-    letrec-unfold M N
   ↝-to-↝↝ (promise-↑ p q V M N) =
     promise-↑ p q V M N
   ↝-to-↝↝ (promise-spawn p M N K) =

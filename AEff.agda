@@ -99,13 +99,6 @@ mutual
                        -----------------------
                        Γ ⊢C⦂ Y ! (o , i)
 
-    letrec_`in_      : {X : VType}
-                       {C D : CType} →
-                       Γ ∷ (X ⇒ C) ∷ X ⊢C⦂ C →
-                       Γ ∷ (X ⇒ C) ⊢C⦂ D →
-                       -----------------------
-                       Γ ⊢C⦂ D
-
     _·_              : {X : VType}
                        {C : CType} → 
                        Γ ⊢V⦂ X ⇒ C →
@@ -259,8 +252,6 @@ mutual
     return (■-dup-v V)
   ■-dup-c (let= M `in N) =
     let= (■-dup-c M) `in (■-dup-c N)
-  ■-dup-c (letrec M `in N) =
-    letrec (■-dup-c M) `in (■-dup-c N)
   ■-dup-c (V · W) =
     (■-dup-v V) · (■-dup-v W)
   ■-dup-c (↑ op p V M) =
@@ -340,8 +331,6 @@ mutual
     return (■-str-v V)
   ■-str-c (let= M `in N) =
     let= (■-str-c M) `in (■-str-c N)
-  ■-str-c (letrec M `in N) =
-    letrec (■-str-c M) `in (■-str-c N)
   ■-str-c (V · W) =
     (■-str-v V) · (■-str-v W)
   ■-str-c (↑ op p V M) =

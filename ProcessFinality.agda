@@ -334,10 +334,8 @@ par-finality-↝↝ : {o o' : O}
 
 par-finality-↝↝ (run R) .id (run r) =
   run-finality-↝↝ R r 
-par-finality-↝↝ (run R) .id (↑ p V M) =
-  run-↑-⊥ R
-par-finality-↝↝ (run R) .spawn (spawn M N) =
-  run-spawn-⊥ R
+par-finality-↝↝ (run ()) .id (↑ p V M)
+par-finality-↝↝ (run ()) .spawn (spawn M N)
 par-finality-↝↝ (par R S) .(par _ ⇝-refl) (context-∥ₗ r') =
   par-finality-↝↝ R _ r'
 par-finality-↝↝ (par R S) .(par ⇝-refl _) (context-∥ᵣ r') =
