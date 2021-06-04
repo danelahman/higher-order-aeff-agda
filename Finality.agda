@@ -77,6 +77,17 @@ mutual
                       ↝↝
                       (promise op ∣ p ↦ M₁ `in (let= M₂ `in (C-rename (ren-cong ren-wk) N)))
 
+    let-await       : {X Y Z : VType}
+                      {o : O}
+                      {i : I} →
+                      (V : Γ ⊢V⦂ ⟨ X ⟩) →
+                      (M : Γ ∷ X ⊢C⦂ Y ! (o , i)) →
+                      (N : Γ ∷ Y ⊢C⦂ Z ! (o , i)) → 
+                      -------------------------------------------------------
+                      let= (await V until M) `in N
+                      ↝↝
+                      await V until (let= M `in C-rename (ren-cong ren-wk) N)
+
     let-spawn       : {X Y : VType}
                       {C : CType}
                       {o : O}
@@ -182,6 +193,18 @@ mutual
                       ↓ op V (promise op' ∣ q ↦ M `in N )
                       ↝↝
                       promise op' ∣ (lkpᵢ-↓ₑ-neq-⊑ {o = o} {i = i} p q) ↦ M `in ↓ op (V-rename ren-wk V) N                                     
+
+    ↓-await        : {X Y : VType}
+                     {o : O}
+                     {i : I}
+                     {op : Σₛ} →
+                     (V : Γ ⊢V⦂ proj₁ (payload op)) →
+                     (W : Γ ⊢V⦂ ⟨ X ⟩) →
+                     (M : Γ ∷ X ⊢C⦂ Y ! (o , i)) →
+                     ------------------------------------------
+                     ↓ op V (await W until M)
+                     ↝↝
+                     await W until (↓ op (V-rename ren-wk V) M)
 
     ↓-spawn         : {X : VType}
                       {C : CType}
@@ -331,6 +354,18 @@ mutual
                                           M
                                           (coerce p q N)
 
+    coerce-await   : {X Y : VType}
+                     {o o' : O}
+                     {i i' : I}
+                     {p : o ⊑ₒ o'}
+                     {q : i ⊑ᵢ i'} →
+                     (V : Γ ⊢V⦂ ⟨ X ⟩) →
+                     (M : Γ ∷ X ⊢C⦂ Y ! (o , i)) →
+                     -----------------------------
+                     coerce p q (await V until M)
+                     ↝↝
+                     await V until (coerce p q M)
+
     coerce-spawn   : {X : VType}
                      {C : CType}
                      {o o' : O}
@@ -362,6 +397,8 @@ mutual
   let-↑ p V M N
 ↝↝-to-↝ (let-promise p M₁ M₂ N) =
   let-promise p M₁ M₂ N
+↝↝-to-↝ (let-await V M N) =
+  let-await V M N
 ↝↝-to-↝ (let-spawn M N K) =
   let-spawn M N K
 ↝↝-to-↝ (letrec-unfold M N) =
@@ -378,6 +415,8 @@ mutual
   ↓-promise-op p V M N
 ↝↝-to-↝ (↓-promise-op' p q V M N) =
   ↓-promise-op' p q V M N
+↝↝-to-↝ (↓-await V W M) =
+  ↓-await V W M
 ↝↝-to-↝ (↓-spawn V M N) =
   ↓-spawn V M N
 ↝↝-to-↝ (await-promise V M) =
@@ -402,6 +441,8 @@ mutual
   coerce-↑ p V M
 ↝↝-to-↝ (coerce-promise p M N) =
   coerce-promise p M N
+↝↝-to-↝ (coerce-await V M) =
+  coerce-await V M
 ↝↝-to-↝ (coerce-spawn M N) =
   coerce-spawn M N
 
@@ -447,6 +488,8 @@ mutual
     let-↑ p V M N
   ↝-to-↝↝ (let-promise p M₁ M₂ N) =
     let-promise p M₁ M₂ N
+  ↝-to-↝↝ (let-await V M N) =
+    let-await V M N
   ↝-to-↝↝ (let-spawn M N K) =
     let-spawn M N K
   ↝-to-↝↝ (letrec-unfold M N) =
@@ -463,6 +506,8 @@ mutual
     ↓-promise-op p V M N
   ↝-to-↝↝ (↓-promise-op' p q V M N) =
     ↓-promise-op' p q V M N
+  ↝-to-↝↝ (↓-await V W M) =
+    ↓-await V W M
   ↝-to-↝↝ (↓-spawn V M N) =
     ↓-spawn V M N
   ↝-to-↝↝ (await-promise V M) =
@@ -477,159 +522,13 @@ mutual
     coerce-↑ p V M
   ↝-to-↝↝ (coerce-promise p M N) =
     coerce-promise p M N
+  ↝-to-↝↝ (coerce-await V M) =
+    coerce-await V M
   ↝-to-↝↝ (coerce-spawn M N) =
     coerce-spawn M N
 
 
 -- FINALITY OF RESULT FORMS
-
-run-invert-let : {Γ : MCtx}
-                 {X Y : VType}
-                 {o : O}
-                 {i : I}
-                 {M : ⟨⟨ Γ ⟩⟩ ⊢C⦂ X ! (o , i)}
-                 {N : (⟨⟨ Γ ⟩⟩ ∷ X) ⊢C⦂ Y ! (o , i)} →
-                 RunResult⟨ Γ ∣ let= M `in N ⟩ →
-                 -------------------------------------
-                 RunResult⟨ Γ ∣ M ⟩
-
-run-invert-let (awaiting (let-in R)) =
-  awaiting R
-
-
-run-invert-↓ : {Γ : MCtx}
-               {X : VType}
-               {o : O}
-               {i : I}
-               {op : Σₛ}
-               {V : ⟨⟨ Γ ⟩⟩ ⊢V⦂ proj₁ (payload op)}
-               {M : ⟨⟨ Γ ⟩⟩ ⊢C⦂ X ! (o , i)} →
-               RunResult⟨ Γ ∣ ↓ op V M ⟩ → 
-               -----------------------------------
-               RunResult⟨ Γ ∣ M ⟩
-
-run-invert-↓ (awaiting (interrupt await)) =
-  awaiting await
-run-invert-↓ (awaiting (interrupt (let-in R))) =
-  awaiting (let-in R)
-run-invert-↓ (awaiting (interrupt (interrupt R))) =
-  awaiting (interrupt R)
-run-invert-↓ (awaiting (interrupt (coerce R))) =
-  awaiting (coerce R)
-
-
-run-invert-promise : {Γ : MCtx}
-                     {X Y : VType}
-                     {o o' : O}
-                     {i i' : I}
-                     {op : Σₛ}
-                     {p : (o' , i') ⊑ lkpᵢ op i}
-                     {M : (⟨⟨ Γ ⟩⟩ ∷ proj₁ (payload op)) ∷ (𝟙 ⇒ (⟨ X ⟩ ! (∅ₒ , ∅ᵢ [ op ↦ just (o' , i') ]ᵢ))) ⊢C⦂ (⟨ X ⟩ ! (o' , i'))}
-                     {N : (⟨⟨ Γ ⟩⟩ ∷ ⟨ X ⟩) ⊢C⦂ (Y ! (o , i))} → 
-                     RunResult⟨ Γ ∣ (promise op ∣ p ↦ M `in N) ⟩ →
-                     ----------------------------------------------------------------------------------------------------------------
-                     RunResult⟨ Γ ∺ X ∣ N ⟩
-
-run-invert-promise (promise R) =
-  R
-
-
-run-invert-coerce : {Γ : MCtx}
-                    {X : VType}
-                    {o o' : O}
-                    {i i' : I}
-                    {p : o ⊑ₒ o'}
-                    {q : i ⊑ᵢ i'}
-                    {M : ⟨⟨ Γ ⟩⟩ ⊢C⦂ X ! (o , i)} →
-                    RunResult⟨ Γ ∣ coerce p q M ⟩ →
-                    -------------------------------
-                    RunResult⟨ Γ ∣ M ⟩
-
-run-invert-coerce (awaiting (coerce R)) =
-  awaiting R
-
-
-run-apply-⊥ : {Γ : MCtx}
-              {X : VType}
-              {C : CType}
-              {M : (⟨⟨ Γ ⟩⟩ ∷ X) ⊢C⦂ C}
-              {V : ⟨⟨ Γ ⟩⟩ ⊢V⦂ X} →
-              RunResult⟨ Γ ∣ ƛ M · V ⟩ →
-              --------------------------
-              ⊥
-
-run-apply-⊥ (awaiting ())
-
-
-run-↑-⊥ : {Γ : MCtx}
-          {X : VType}
-          {o : O}
-          {i : I}
-          {op : Σₛ}
-          {p : op ∈ₒ o}
-          {V : ⟨⟨ Γ ⟩⟩ ⊢V⦂ proj₁ (payload op)}
-          {M : ⟨⟨ Γ ⟩⟩ ⊢C⦂ (X ! (o , i))} → 
-          RunResult⟨ Γ ∣ ↑ op p V M ⟩ →
-          --------------------------------
-          ⊥
-                 
-run-↑-⊥ (awaiting ())
-
-
-run-spawn-⊥ : {Γ : MCtx}
-              {C D : CType}
-              {M : ⟨⟨ Γ ⟩⟩ ■ ⊢C⦂ C}
-              {N : ⟨⟨ Γ ⟩⟩ ⊢C⦂ D} →
-              RunResult⟨ Γ ∣ spawn M N ⟩ →
-              ----------------------------
-              ⊥
-
-run-spawn-⊥ (awaiting ())
-
-              
-run-let-return-⊥ : {Γ : MCtx}
-                   {X Y : VType}
-                   {o : O}
-                   {i : I}
-                   {V : ⟨⟨ Γ ⟩⟩ ⊢V⦂ X}
-                   {N : (⟨⟨ Γ ⟩⟩ ∷ X) ⊢C⦂ (Y ! (o , i))} →
-                   RunResult⟨ Γ ∣ let= return V `in N ⟩ →
-                   --------------------------------------
-                   ⊥
-
-run-let-return-⊥ (awaiting (let-in ()))
-
-
-run-let-promise-⊥ : {Γ : MCtx}
-                    {X Y Z : VType}
-                    {o o' : O}
-                    {i i' : I}
-                    {op : Σₛ}
-                    {p : (o' , i') ⊑ lkpᵢ op i}
-                    {M₁ : (⟨⟨ Γ ⟩⟩ ∷ proj₁ (payload op)) ∷ (𝟙 ⇒ (⟨ X ⟩ ! (∅ₒ , ∅ᵢ [ op ↦ just (o' , i') ]ᵢ))) ⊢C⦂ (⟨ X ⟩ ! (o' , i'))}
-                    {M₂ : (⟨⟨ Γ ⟩⟩ ∷ ⟨ X ⟩) ⊢C⦂ (Y ! (o , i))}
-                    {N  : (⟨⟨ Γ ⟩⟩ ∷ Y) ⊢C⦂ (Z ! (o , i))} →
-                    RunResult⟨ Γ ∣ let= promise op ∣ p ↦ M₁ `in M₂ `in N ⟩ →
-                    ------------------------------------------------------------------------------------------------------------------
-                    ⊥
-
-run-let-promise-⊥ (awaiting (let-in ()))
-
-
-run-let-spawn-⊥ : {Γ : MCtx}
-                  {X Y : VType}
-                  {C : CType}
-                  {o : O}
-                  {i : I}
-                  {M : ⟨⟨ Γ ⟩⟩ ■ ⊢C⦂ C}
-                  {N : ⟨⟨ Γ ⟩⟩ ⊢C⦂ (X ! (o , i))}
-                  {K  : (⟨⟨ Γ ⟩⟩ ∷ X) ⊢C⦂ (Y ! (o , i))} →
-                  RunResult⟨ Γ ∣ let= spawn M N `in K ⟩ →
-                  ----------------------------------------------------------
-                  ⊥
-
-run-let-spawn-⊥ (awaiting (let-in ()))
-
 
 run-finality-↝↝ : {Γ : MCtx}
                   {C : CType}
@@ -639,39 +538,10 @@ run-finality-↝↝ : {Γ : MCtx}
                   -----------------------
                   ⊥
 
-run-finality-↝↝ (awaiting ()) (apply M V)
-run-finality-↝↝ R (let-return V N) =
-  run-let-return-⊥ R
-run-finality-↝↝ R (let-↑ p V M N) =
-  run-↑-⊥ (run-invert-let R)
-run-finality-↝↝ R (let-promise p M₁ M₂ N) =
-  run-let-promise-⊥ R
-run-finality-↝↝ R (let-spawn M N K) =
-  run-let-spawn-⊥ R
-run-finality-↝↝ (awaiting ()) (letrec-unfold M N)
-run-finality-↝↝ (promise (awaiting ())) (promise-↑ p q V M N)
-run-finality-↝↝ (promise (awaiting ())) (promise-spawn p M N K)
-run-finality-↝↝ (awaiting (interrupt ())) (↓-return V W)
-run-finality-↝↝ (awaiting (interrupt ())) (↓-↑ p V W M)
-run-finality-↝↝ (awaiting (interrupt ())) (↓-promise-op p V M N)
-run-finality-↝↝ (awaiting (interrupt ())) (↓-promise-op' p q V M N)
-run-finality-↝↝ (awaiting (interrupt ())) (↓-spawn V M N)
-run-finality-↝↝ (awaiting ()) (await-promise V M)
-run-finality-↝↝ (awaiting ()) (box-unbox V M)
-run-finality-↝↝ R (context-let r) =
-  run-finality-↝↝ (run-invert-let R) r
-run-finality-↝↝ R (context-↑ r) =
-  run-↑-⊥ R
-run-finality-↝↝ R (context-↓ r) =
-  run-finality-↝↝ (run-invert-↓ R) r
-run-finality-↝↝ R (context-promise r) =
-  run-finality-↝↝ (run-invert-promise R) r
-run-finality-↝↝ R (context-coerce r) =
-  run-finality-↝↝ (run-invert-coerce R) r
-run-finality-↝↝ (awaiting (coerce ())) (coerce-return V)
-run-finality-↝↝ (awaiting (coerce ())) (coerce-↑ p V M)
-run-finality-↝↝ (awaiting (coerce ())) (coerce-promise p M N)
-run-finality-↝↝ (awaiting (coerce ())) (coerce-spawn M N)
+run-finality-↝↝ (promise ()) (promise-↑ p q V M N)
+run-finality-↝↝ (promise ()) (promise-spawn p M N K)
+run-finality-↝↝ (promise R) (context-promise r) =
+  run-finality-↝↝ R r
 
 
 comp-finality-↝↝ : {Γ : MCtx}
@@ -700,5 +570,6 @@ comp-finality : {Γ : MCtx}
 
 comp-finality R r =
   comp-finality-↝↝ R (↝-to-↝↝ r)
+
 
 

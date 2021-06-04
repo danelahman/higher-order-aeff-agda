@@ -283,6 +283,17 @@ data _↝_ {Γ : Ctx} : {C : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ C → Set wh
                     ↝
                     (promise op ∣ p ↦ M₁ `in (let= M₂ `in (C-rename (ren-cong ren-wk) N)))
 
+  let-await       : {X Y Z : VType}
+                    {o : O}
+                    {i : I} →
+                    (V : Γ ⊢V⦂ ⟨ X ⟩) →
+                    (M : Γ ∷ X ⊢C⦂ Y ! (o , i)) →
+                    (N : Γ ∷ Y ⊢C⦂ Z ! (o , i)) → 
+                    -------------------------------------------------------
+                    let= (await V until M) `in N
+                    ↝
+                    await V until (let= M `in C-rename (ren-cong ren-wk) N)
+
   let-spawn       : {X Y : VType}
                     {C : CType}
                     {o : O}
@@ -389,6 +400,18 @@ data _↝_ {Γ : Ctx} : {C : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ C → Set wh
                     ↝
                     promise op' ∣ (lkpᵢ-↓ₑ-neq-⊑ {o = o} {i = i} p q) ↦ M `in ↓ op (V-rename ren-wk V) N                                     
 
+  ↓-await         : {X Y : VType}
+                    {o : O}
+                    {i : I}
+                    {op : Σₛ} →
+                    (V : Γ ⊢V⦂ proj₁ (payload op)) →
+                    (W : Γ ⊢V⦂ ⟨ X ⟩) →
+                    (M : Γ ∷ X ⊢C⦂ Y ! (o , i)) →
+                    ------------------------------------------
+                    ↓ op V (await W until M)
+                    ↝
+                    await W until (↓ op (V-rename ren-wk V) M)
+
   ↓-spawn         : {X : VType}
                     {C : CType}
                     {o : O}
@@ -474,6 +497,18 @@ data _↝_ {Γ : Ctx} : {C : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ C → Set wh
                                             (lkpᵢ-next-⊑ᵢ q (proj₂ (proj₂ (⊑-just r)))))))
                                         M
                                         (coerce p q N)
+
+  coerce-await   : {X Y : VType}
+                   {o o' : O}
+                   {i i' : I}
+                   {p : o ⊑ₒ o'}
+                   {q : i ⊑ᵢ i'} →
+                   (V : Γ ⊢V⦂ ⟨ X ⟩) →
+                   (M : Γ ∷ X ⊢C⦂ Y ! (o , i)) →
+                   -----------------------------
+                   coerce p q (await V until M)
+                   ↝
+                   await V until (coerce p q M)
 
   coerce-spawn   : {X : VType}
                    {C : CType}
