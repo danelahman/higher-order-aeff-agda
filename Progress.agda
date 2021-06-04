@@ -5,7 +5,6 @@ open import Data.Sum
 open import Data.Unit
 
 open import AEff
-open import AwaitingComputations
 open import EffectAnnotations
 open import Preservation
 open import Renamings
