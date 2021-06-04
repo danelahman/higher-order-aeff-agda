@@ -128,7 +128,7 @@ data _[_]↝↝_ {Γ : Ctx} : {o o' : O} {PP : PType o} {QQ : PType o'} → Γ �
             (N : Γ ⊢C⦂ Y ! (o' , i')) →
             ---------------------------
             run (spawn M N)
-            [ spawn ]↝↝
+            [ spawn-l ]↝↝
             run (■-str-c {Γ' = []} M) ∥ run N
 
   -- EVALUATION CONTEXT RULES
@@ -334,7 +334,7 @@ par-finality-↝↝ : {o o' : O}
 par-finality-↝↝ (run R) .id (run r) =
   run-finality-↝↝ R r 
 par-finality-↝↝ (run ()) .id (↑ p V M)
-par-finality-↝↝ (run ()) .spawn (spawn M N)
+par-finality-↝↝ (run ()) .spawn-l (spawn M N)
 par-finality-↝↝ (par R S) .(par _ ⇝-refl) (context-∥ₗ r') =
   par-finality-↝↝ R _ r'
 par-finality-↝↝ (par R S) .(par ⇝-refl _) (context-∥ᵣ r') =
