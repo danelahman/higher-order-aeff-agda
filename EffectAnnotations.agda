@@ -31,7 +31,8 @@ postulate Σₛ : Set
 
 -- SIGNAL AND INTERRUPT NAMES HAVE DECIDABLE EQUALITY
 
-postulate decₛ : (op op' : Σₛ) → Dec (op ≡ op')
+postulate
+  decₛ : (op op' : Σₛ) → Dec (op ≡ op')
 
 if_≡_then_else_ : {A : Set} → Σₛ → Σₛ → A → A → A
 if op ≡ op' then x else y with decₛ op op'
@@ -68,12 +69,11 @@ ite-≢ {A} {op} {op'} p | no ¬q =
 
 -- EFFECT ANNOTATIONS FOR OUTGOING SIGNALS (O) AND INTERRUPT HANDLERS (I)
 
-mutual
-  data O : Set where
-    omap : (Σₛ → Maybe ⊤) → O
+data O : Set where
+  omap : (Σₛ → Maybe ⊤) → O
 
-  data I : Set where
-    imap : (Σₛ → Maybe (O × I)) → I
+data I : Set where
+  imap : (Σₛ → Maybe (O × I)) → I
 
 
 -- EMPTY EFFECT ANNOTATIONS
