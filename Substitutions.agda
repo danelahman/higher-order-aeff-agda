@@ -146,8 +146,8 @@ mutual
           
   (` x) [ s ]v =
     sub-var x s
-  (´ c) [ s ]v =
-    ´ c
+  (const c) [ s ]v =
+    const c
   ⋆ [ s ]v =
     ⋆
   (ƛ M) [ s ]v =
@@ -174,8 +174,8 @@ mutual
     ↑ op p (V [ s ]v) (M [ s ]c)
   (↓ op V M) [ s ]c =
     ↓ op (V [ s ]v) (M [ s ]c)
-  (promise op ∣ p ↦ M `in N) [ s ]c =
-    promise op ∣ p ↦ (M [ subst-cong (subst-cong s) ]c) `in (N [ subst-cong s ]c)
+  (promise op ∣ p ↦ M at V `in N) [ s ]c =
+    promise op ∣ p ↦ (M [ subst-cong (subst-cong (subst-cong s)) ]c) at (V [ s ]v) `in (N [ subst-cong s ]c)
   (await V until M) [ s ]c =
     await (V [ s ]v) until (M [ subst-cong s ]c)
   (unbox V `in M) [ s ]c =

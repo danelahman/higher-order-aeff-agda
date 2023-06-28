@@ -42,16 +42,17 @@ data RunResult⟨_∣_⟩ (Γ : MCtx) : {C : CType} → ⟨⟨ Γ ⟩⟩ ⊢C⦂
             ------------------------------------------
             RunResult⟨ Γ ∣ return {o = o} {i = i} V ⟩
 
-  promise : {X Y : VType}
+  promise : {X Y S : VType}
             {o o' : O}
             {i i' : I}
             {op : Σₛ}
             {p : (o' , i') ⊑ lkpᵢ op i}
-            {M : ⟨⟨ Γ ⟩⟩ ∷ proj₁ (payload op) ∷ (𝟙 ⇒ (⟨ X ⟩ ! (∅ₒ , ∅ᵢ [ op ↦ just (o' , i') ]ᵢ))) ⊢C⦂ ⟨ X ⟩ ! (o' , i')}
+            {M : ⟨⟨ Γ ⟩⟩ ∷ proj₁ (payload op) ∷ (S ⇒ (⟨ X ⟩ ! (∅ₒ , ∅ᵢ [ op ↦ just (o' , i') ]ᵢ))) ∷ S ⊢C⦂ ⟨ X ⟩ ! (o' , i')}
+            {V : ⟨⟨ Γ ⟩⟩ ⊢V⦂ S}
             {N : ⟨⟨ Γ ⟩⟩ ∷ ⟨ X ⟩ ⊢C⦂ Y ! (o , i)} →
             RunResult⟨ Γ ∺ X ∣ N ⟩ →
-            ------------------------------------------------------------------------------------------------------------
-            RunResult⟨ Γ ∣ promise op ∣ p ↦ M `in N ⟩
+            -----------------------------------------------------------------------------------------------------------------
+            RunResult⟨ Γ ∣ promise op ∣ p ↦ M at V `in N ⟩
 
   await   : {C : CType}
             {X : VType}
@@ -114,8 +115,8 @@ progress (let= M `in N) with progress M
   inj₁ (_ , context (let= [-] `in N) r)
 ... | inj₂ (comp (return V)) =
   inj₁ (_ , let-return V N)
-... | inj₂ (comp (promise {p = p} {M = M'} {N = M''} R)) =
-  inj₁ (_ , let-promise p M' M'' N)
+... | inj₂ (comp (promise {p = p} {M = M'} {V = V} {N = M''} R)) =
+  inj₁ (_ , let-promise p M' V M'' N)
 ... | inj₂ (comp (await {x = x} {M = M'})) =
   inj₁ (_ , let-await (` x) M' N)
 ... | inj₂ (signal {p = p} {V = V} {M = M'} R) =
@@ -142,20 +143,20 @@ progress (↓ op V M) with progress M
   inj₁ (_ , (↓-↑ p V W M'))
 ... | inj₂ (spawn {M = M'} {N = M''} R) =
   inj₁ (_ , ↓-spawn V M' M'')
-... | inj₂ (comp (promise {op = op'} {p = p} {M = M'} {N = M''} R)) with decₛ op op'
+... | inj₂ (comp (promise {op = op'} {p = p} {M = M'} {V = W} {N = M''} R)) with decₛ op op'
 ... | yes refl =
-  inj₁ (_ , ↓-promise-op p V M' M'')
+  inj₁ (_ , ↓-promise-op p V M' W M'')
 ... | no ¬q =
-  inj₁ (_ , ↓-promise-op' ¬q p V M' M'')
-progress (promise op ∣ p ↦ M `in N) with progress N
+  inj₁ (_ , ↓-promise-op' ¬q p V M' W M'')
+progress (promise op ∣ p ↦ M at V `in N) with progress N
 ... | inj₁ (M' , r) =
-  inj₁ (_ , context (promise op ∣ p ↦ M `in [-]) r)
+  inj₁ (_ , context (promise op ∣ p ↦ M at V `in [-]) r)
 ... | inj₂ (comp R) =
   inj₂ (comp (promise R))
-... | inj₂ (signal {p = q} {V = V} {M = M'} R) =
-  inj₁ (_ , promise-↑ p q V M M')
+... | inj₂ (signal {p = q} {V = W} {M = M'} R) =
+  inj₁ (_ , promise-↑ p q W M V M')
 ... | inj₂ (spawn {M = M'} {N = M''} R) =
-  inj₁ (_ , promise-spawn p M M' M'')
+  inj₁ (_ , promise-spawn p M V M' M'')
 progress (await ` x until M) =
   inj₂ (comp await)
 progress (await ⟨ V ⟩ until M) =
@@ -178,8 +179,8 @@ progress (coerce p q M) with progress M
   inj₁ (_ , context (coerce p q [-]) r)
 ... | inj₂ (comp (return V)) =
   inj₁ (_ , coerce-return V)
-... | inj₂ (comp (promise {op = op'} {p = r} {M = M'} {N = M''} R)) =
-  inj₁ (_ , coerce-promise r M' M'')
+... | inj₂ (comp (promise {op = op'} {p = r} {M = M'} {V = V} {N = M''} R)) =
+  inj₁ (_ , coerce-promise r M' V M'')
 ... | inj₂ (comp (await {x = x} {M = M'})) =
   inj₁ (_ , coerce-await (` x) M')
 ... | inj₂ (signal {p = r} {V = V} {M = M'} R) =
